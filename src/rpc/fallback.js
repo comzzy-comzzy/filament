@@ -32,7 +32,9 @@ function isTransient(err) {
 async function callWithFallback(fn, opts = {}) {
   const { retries, backoffMs, chain } = { ...DEFAULT_OPTS, ...opts };
   let lastErr;
+  let attempts = 0;
   for (let attempt = 1; attempt <= retries; attempt += 1) {
+    attempts = attempt;
     try {
       return await fn(attempt);
     } catch (err) {
@@ -44,9 +46,9 @@ async function callWithFallback(fn, opts = {}) {
     }
   }
   throw new RpcError(
-    `RPC call failed after ${retries} attempt(s)` +
+    `RPC call failed after ${attempts} attempt(s)` +
       (chain ? ` on chain ${chain}` : ''),
-    { cause: lastErr, chain, attempts: retries },
+    { cause: lastErr, chain, attempts },
   );
 }
 
