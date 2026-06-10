@@ -1,0 +1,31 @@
+{
+  "name": "filament",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-chain EVM wallet identity stitching MCP server using onchain behavioral heuristics.",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest",
+    "example:basic": "node examples/agent-workflow-basic.js",
+    "example:trace": "node examples/agent-workflow-deep-trace.js",
+    "example:sanctions": "node examples/agent-workflow-sanctions-check.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/tests/**/*.test.js"
+    ]
+  }
+}

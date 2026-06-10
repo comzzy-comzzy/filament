@@ -1,0 +1,61 @@
+// src/tools/temporalActivityCorrelation.js
+// Tool 8: temporal_activity_correlation — cross-correlation matrix.
+
+const { validateAddress } = require('../utils/checksum');
+const { SchemaError } = require('../utils/errors');
+const { listChains } = require('../config/chains');
+const temporal = require('../heuristics/temporalCorrelation');
+
+const inputSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['wallets'],
+  properties: {
+    wallets: { type: 'array', items: { type: 'string' }, minItems: 2 },
+    chains: { type: 'array', items: { type: 'string' } },
+  },
+};
+
+function validate(input) {
+  if (!input || typeof input !== 'object') {
+    throw new SchemaError('temporal_activity_correlation', 'input must be an object');
+  }
+  if (!Array.isArray(input.wallets) || input.wallets.length < 2) {
+    throw new SchemaError(
+      'temporal_activity_correlation',
+      'wallets must contain at least two addresses',
+    );
+  }
+  return {
+    wallets: input.wallets.map((w) => validateAddress(w)),
+    chains: input.chains || listChains(),
+  };
+}
+
+async function handler(input, ctx = {}) {
+  const params = validate(input);
+  const wallets = params.wallets.map((w) => ({
+    wallet: w,
+    timestamps: (ctx.activityTimestamps && ctx.activityTimestamps[w]) || [],
+  }));
+  const result = await temporal.run({ wallets }, ctx);
+  return {
+    wallets: params.wallets,
+    chains: params.chains,
+    correlationMatrix: result.evidence ? result.evidence.matrix : [],
+    topPairs: result.evidence ? result.evidence.topPairs : [],
+    timezoneHint: result.evidence ? result.evidence.timezoneHint : 'unknown',
+    heatmap: result.evidence ? result.evidence.matrix : [],
+    score: result.score,
+    fired: result.fired,
+    evidence: result.evidence,
+  };
+}
+
+module.exports = {
+  name: 'temporal_activity_correlation',
+  description: 'Cross-correlate per-wallet activity timestamps across chains.',
+  inputSchema,
+  handler,
+  validate,
+};
