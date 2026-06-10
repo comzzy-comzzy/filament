@@ -88,7 +88,7 @@ A chain is "supported" if it appears in `src/config/chains.js`. Whether
 Filament actually queries it depends on whether the corresponding
 `RPC_*` environment variable is set.
 
-## MCP Tools Reference
+## MCP Tools Reference (all 11 tools with inputs and example outputs)
 
 ### `stitch_identity`
 
@@ -98,10 +98,27 @@ a confidence-scored cluster.
 **Input:**
 
 ```json
-{ "wallet": "0x...", "chains": ["ethereum", "arbitrum", "mantle"] }
+{ "wallet": "0x000000000000000000000000000000000000a11e", "chains": ["ethereum", "arbitrum", "base"] }
 ```
 
-**Returns:** confidence tier, per-chain status, depth reached.
+**Example output (truncated):**
+
+```json
+{
+  "wallet": "0x000000000000000000000000000000000000a11e",
+  "chains": ["ethereum", "arbitrum", "base"],
+  "depth": 2,
+  "perChain": {
+    "ethereum": { "skipped": false, "txCount": 137, "firstSeen": 1609459200 },
+    "arbitrum": { "skipped": false, "txCount": 42, "firstSeen": 1622505600 },
+    "base":    { "skipped": true, "reason": "no_rpc_configured" }
+  },
+  "linkedWallets": ["0x000000000000000000000000000000000000b0bb"],
+  "fired": true,
+  "score": 0.62,
+  "tier": "Probable"
+}
+```
 
 ### `nonce_pattern_match`
 
