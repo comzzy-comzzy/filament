@@ -221,7 +221,7 @@ final confidence tier plus the supporting evidence per linked wallet.
 ## Installation
 
 ```bash
-git clone <repo>
+git clone https://github.com/comzzy-comzzy/filament.git
 cd filament
 npm install
 cp .env.example .env   # then fill in your RPC URLs
