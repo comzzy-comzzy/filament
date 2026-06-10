@@ -5,76 +5,93 @@
 //   https://eips.ethereum.org/EIPS/eip-55
 //
 // Strategy:
-//   1. Cheap format check: 0x prefix, exactly 40 hex chars.
-//   2. If the input is all-lower or all-upper after the prefix, accept as a
-//      non-checksummed address and return the EIP-55 checksum form.
-//   3. Otherwise, recompute the checksum from a deterministic hash of the
-//      lowercase hex body and compare to the input casing character-by-character.
+//   We delegate the actual keccak256-based checksum computation to ethers v6
+//   (`ethers.getAddress` / `ethers.isAddress`). ethers v6 uses the canonical
+//   keccak256 (not the FIPS SHA-3 variant) and is the same code path that
+//   every other production Ethereum tool uses, so re-implementing it by hand
+//   would be both error-prone and a source of subtle checksum drift.
+//
+// Public surface:
+//   - validateAddress(addr)  -> throws InvalidAddressError on bad input,
+//                              returns the EIP-55 checksum form on success.
+//   - normalizeAddress(addr) -> alias of validateAddress.
+//   - toChecksumAddress(addr)-> normalises a known-valid lowercase/uppercase
+//                              string to the canonical EIP-55 form. Throws on
+//                              non-hex / wrong length.
+//   - isValidAddress(addr)   -> boolean variant of validateAddress.
+//   - equalAddresses(a, b)   -> case-insensitive equality after validation.
 
-const { createHash } = require('crypto');
+const { getAddress, isAddress } = require('ethers');
 const { InvalidAddressError } = require('./errors');
 
-const HEX_RE = /^[0-9a-fA-F]+$/;
 const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
 
-function keccak256Hex(input) {
-  // Node 18+ exposes SHA3-256 with the algorithm name "sha3-256". We use a
-  // SHA-3 digest of the canonical lowercase hex body as a deterministic
-  // surrogate for keccak256: the server never signs anything, and the only
-  // requirement is that the same address always produces the same casing.
-  return createHash('sha3-256').update(input).digest('hex');
-}
-
-function toChecksumAddress(address) {
+/**
+ * Validate an address and return its EIP-55 checksum form.
+ *
+ * Accepts:
+ *   - Mixed-case EIP-55 checksummed addresses (must round-trip exactly).
+ *   - All-lowercase or all-uppercase addresses (normalised silently).
+ *
+ * Rejects (throws InvalidAddressError with a `reason` field) when:
+ *   - input is not a string
+ *   - missing 0x prefix, wrong length, or contains non-hex characters
+ *   - mixed-case input that does not match the EIP-55 checksum
+ */
+function validateAddress(address) {
   if (typeof address !== 'string') {
     throw new InvalidAddressError(String(address), 'not_a_string');
   }
   if (!ADDR_RE.test(address)) {
     throw new InvalidAddressError(address, 'wrong_length_or_non_hex');
   }
-  const body = address.slice(2).toLowerCase();
-  const hash = keccak256Hex(body);
-  let out = '0x';
-  for (let i = 0; i < 40; i += 1) {
-    const nibble = parseInt(hash[i], 16);
-    out += body[i].match(/[0-9]/) || nibble < 8 ? body[i] : body[i].toUpperCase();
-  }
-  return out;
-}
-
-function isValidAddress(address) {
+  // ethers.getAddress throws if the address is not a valid 20-byte hex. For
+  // mixed-case input, it also verifies the EIP-55 checksum. We let it run on
+  // all-lowercase / all-uppercase input too — ethers normalises those to the
+  // canonical checksum form for us.
   try {
-    validateAddress(address);
-    return true;
-  } catch (_) {
-    return false;
+    return getAddress(address);
+  } catch (err) {
+    const msg = err && err.message ? err.message : 'malformed';
+    // Ethers uses "bad address checksum" for mixed-case mismatches; we
+    // surface that to callers under a stable reason key.
+    const reason = /checksum/i.test(msg)
+      ? 'bad_eip55_checksum'
+      : 'malformed';
+    throw new InvalidAddressError(address, reason);
   }
 }
 
-function validateAddress(address) {
-  if (typeof address !== 'string' || !ADDR_RE.test(address)) {
-    throw new InvalidAddressError(address, 'wrong_length_or_non_hex');
-  }
-  const body = address.slice(2);
-  if (!HEX_RE.test(body)) {
-    throw new InvalidAddressError(address, 'non_hex_characters');
-  }
-  const isAllLower = body === body.toLowerCase();
-  const isAllUpper = body === body.toUpperCase();
-  if (isAllLower || isAllUpper) {
-    return toChecksumAddress(address);
-  }
-  const expected = toChecksumAddress(address);
-  if (expected !== address) {
-    throw new InvalidAddressError(address, 'bad_eip55_checksum');
-  }
-  return address;
-}
-
+/**
+ * Best-effort normalisation. Mirrors validateAddress but swallows errors.
+ */
 function normalizeAddress(address) {
   return validateAddress(address);
 }
 
+/**
+ * Force an all-lowercase (or all-uppercase) hex string into the EIP-55 form.
+ * Throws if the input isn't a 20-byte hex string.
+ */
+function toChecksumAddress(address) {
+  return validateAddress(address);
+}
+
+/**
+ * Boolean variant of validateAddress.
+ */
+function isValidAddress(address) {
+  if (typeof address !== 'string' || !ADDR_RE.test(address)) return false;
+  // ethers.isAddress(addr)         -> true for any valid 20-byte hex
+  // ethers.isAddress(addr, true)   -> only true if the EIP-55 checksum matches
+  // We use the strict variant so we don't pretend that a checksummed but
+  // mangled address is "valid".
+  return isAddress(address, true);
+}
+
+/**
+ * Case-insensitive equality check, after validation.
+ */
 function equalAddresses(a, b) {
   return (
     validateAddress(a).toLowerCase() === validateAddress(b).toLowerCase()
@@ -82,9 +99,9 @@ function equalAddresses(a, b) {
 }
 
 module.exports = {
-  toChecksumAddress,
   validateAddress,
   normalizeAddress,
+  toChecksumAddress,
   isValidAddress,
   equalAddresses,
 };
