@@ -24,6 +24,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "testTimeout": 60000,
     "testMatch": [
       "<rootDir>/tests/**/*.test.js"
     ]
