@@ -109,16 +109,37 @@ a confidence-scored cluster.
   "chains": ["ethereum", "arbitrum", "base"],
   "depth": 2,
   "perChain": {
-    "ethereum": { "skipped": false, "txCount": 137, "firstSeen": 1609459200 },
-    "arbitrum": { "skipped": false, "txCount": 42, "firstSeen": 1622505600 },
-    "base":    { "skipped": true, "reason": "no_rpc_configured" }
+    "ethereum": { "ok": true, "depth": 2 },
+    "arbitrum": { "ok": true, "depth": 2 },
+    "base":     { "skipped": true, "reason": "no_rpc_configured" }
   },
+  "heuristicScores": {
+    "noncePattern":        { "score": 0.62, "fired": true,  "evidence": { "similarity": 0.62 } },
+    "deploymentDna":       { "score": 0.20, "fired": true,  "evidence": { "collisions": 1 } },
+    "bridgeHop":           { "score": 0.65, "fired": true,  "evidence": { "hops": 4 } },
+    "gasBehavior":         { "score": 0.55, "fired": true,  "evidence": { "bestCosine": 0.55 } },
+    "eoaCluster":          { "score": 0.71, "fired": true,  "evidence": { "reciprocity": 0.7 } },
+    "contractOverlap":     { "score": 0.00, "fired": false, "evidence": { "reason": "pairwise_heuristic", "tool": "contract_interaction_overlap" } },
+    "temporalCorrelation": { "score": 0.60, "fired": true,  "evidence": { "topPairs": [] } },
+    "entropyScorer":       { "score": 0.10, "fired": false, "evidence": { "reason": "no_data" } },
+    "sanctionProximity":   { "score": 0.40, "fired": true,  "evidence": { "hop": 1 } }
+  },
+  "score": 0.46,
+  "tier": "Probable",
+  "breakdown": [
+    { "heuristic": "noncePattern",        "weight": 0.10, "score": 0.62, "contribution": 0.062, "fired": true },
+    { "heuristic": "deploymentDna",       "weight": 0.15, "score": 0.20, "contribution": 0.030, "fired": true }
+  ],
   "linkedWallets": ["0x000000000000000000000000000000000000b0bb"],
-  "fired": true,
-  "score": 0.62,
-  "tier": "Probable"
+  "graphPayload": { "nodes": ["0x…a11e", "0x…b0bb"], "edges": [] },
+  "weights": { "noncePattern": 0.10, "deploymentDna": 0.15, "bridgeHop": 0.10, "gasBehavior": 0.10, "eoaCluster": 0.15, "contractOverlap": 0.15, "temporalCorrelation": 0.10, "entropyScorer": 0.05, "sanctionProximity": 0.10 }
 }
 ```
+
+The pairwise `contract_interaction_overlap` heuristic is intentionally
+not invoked from this tool (it requires a second wallet); callers
+needing it should use the dedicated `contract_interaction_overlap`
+tool.
 
 ### `nonce_pattern_match`
 
