@@ -10,7 +10,7 @@ const { toChecksumAddress } = require('../src/utils/checksum');
 
 const SEED = '0x000000000000000000000000000000000000a11e';
 const seed = toChecksumAddress(SEED);
-const linked = toChecksumAddress('0x000000000000000000000000000000000000b0b');
+const linked = toChecksumAddress('0x000000000000000000000000000000000000b0bb');
 
 async function main() {
   const client = new FakeMcpClient({
