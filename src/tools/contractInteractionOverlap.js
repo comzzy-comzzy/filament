@@ -42,8 +42,8 @@ async function handler(input, ctx = {}) {
     walletB: params.walletB,
     overlapScore: result.score,
     sharedContracts: Array.from(new Set(shared)),
-    jaccard: result.evidence ? result.evidence.jaccard : 0,
-    obscureOverlap: result.evidence ? result.evidence.obscureOverlapCount : 0,
+    jaccard: (result.evidence && result.evidence.jaccard) || 0,
+    obscureOverlap: (result.evidence && result.evidence.obscureOverlapCount) || 0,
     evidence: result.evidence,
     fired: result.fired,
   };

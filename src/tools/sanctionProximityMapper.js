@@ -30,7 +30,7 @@ async function handler(input, ctx = {}) {
     wallet: params.wallet,
     depth: params.depth,
     tree: exposures,
-    flagged: result.evidence ? result.evidence.flagged : [],
+    flagged: (result.evidence && result.evidence.flagged) || [],
     score: result.score,
     fired: result.fired,
     evidence: result.evidence,

@@ -33,19 +33,18 @@ async function handler(input, ctx = {}) {
   const params = validate(input);
   const edges = (ctx.fundingEdges && ctx.fundingEdges[params.wallet]) || [];
   const result = await cluster.run({ edges }, ctx);
+  const reciprocity = (result.evidence && result.evidence.reciprocity) || [];
   return {
     wallet: params.wallet,
     depth: params.depth,
     chains: params.chains,
     adjacency: edges,
     edges,
-    clusterSize: result.evidence ? result.evidence.edges : 0,
-    centralCandidates: result.evidence
-      ? result.evidence.reciprocity
-          .filter((r) => r.mutual > 0)
-          .sort((a, b) => b.mutual - a.mutual)
-          .slice(0, 5)
-      : [],
+    clusterSize: (result.evidence && result.evidence.edges) || 0,
+    centralCandidates: reciprocity
+      .filter((r) => r.mutual > 0)
+      .sort((a, b) => b.mutual - a.mutual)
+      .slice(0, 5),
     score: result.score,
     fired: result.fired,
     evidence: result.evidence,

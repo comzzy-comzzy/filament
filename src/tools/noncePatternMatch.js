@@ -28,13 +28,20 @@ async function handler(input, ctx = {}) {
   const params = validate(input);
   const seriesByChain = {};
   for (const chain of params.chains) {
+    // Test/dev environments can inject per-chain nonce series via the ctx
+    // (no provider required). The override is always honoured, regardless
+    // of whether a real provider is configured for the chain.
+    const override = ctx.nonceSeries && ctx.nonceSeries[chain];
+    if (override) {
+      seriesByChain[chain] = override;
+      continue;
+    }
     const provider = ctx.getProvider ? ctx.getProvider(chain) : null;
     if (!provider) {
       seriesByChain[chain] = [];
       continue;
     }
-    const override = ctx.nonceSeries && ctx.nonceSeries[chain];
-    seriesByChain[chain] = override || [];
+    seriesByChain[chain] = [];
   }
   const result = await nonce.run({ seriesByChain }, ctx);
   return {

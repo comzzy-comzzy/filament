@@ -32,7 +32,7 @@ function validate(input) {
   return { wallet: input.wallet, chains, depth: input.depth || 2 };
 }
 
-async function handler(input, ctx) {
+async function handler(input, ctx = {}) {
   const params = validate(input);
   const results = {};
   for (const chain of params.chains) {

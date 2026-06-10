@@ -39,13 +39,14 @@ async function handler(input, ctx = {}) {
     timestamps: (ctx.activityTimestamps && ctx.activityTimestamps[w]) || [],
   }));
   const result = await temporal.run({ wallets }, ctx);
+  const evidence = result.evidence || {};
   return {
     wallets: params.wallets,
     chains: params.chains,
-    correlationMatrix: result.evidence ? result.evidence.matrix : [],
-    topPairs: result.evidence ? result.evidence.topPairs : [],
-    timezoneHint: result.evidence ? result.evidence.timezoneHint : 'unknown',
-    heatmap: result.evidence ? result.evidence.matrix : [],
+    correlationMatrix: evidence.matrix || [],
+    topPairs: evidence.topPairs || [],
+    timezoneHint: evidence.timezoneHint || 'unknown',
+    heatmap: evidence.matrix || [],
     score: result.score,
     fired: result.fired,
     evidence: result.evidence,

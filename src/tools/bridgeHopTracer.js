@@ -28,8 +28,8 @@ async function handler(input, ctx = {}) {
   const result = await tracer.run({ edges }, ctx);
   const nodes = new Set();
   for (const e of edges) {
-    nodes.add(e.from);
-    nodes.add(e.to);
+    if (e && e.from) nodes.add(e.from);
+    if (e && e.to) nodes.add(e.to);
   }
   return {
     wallet: params.wallet,

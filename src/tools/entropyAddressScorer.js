@@ -31,18 +31,20 @@ async function handler(input, ctx = {}) {
   const addresses =
     params.addresses || (ctx.childAddresses && ctx.childAddresses[params.wallet]) || [];
   const result = await entropy.run({ addresses }, ctx);
+  const evidence = result.evidence || {};
+  const repeated = evidence.repeatedByteAddresses || 0;
   return {
     wallet: params.wallet,
     entropyScore: result.score,
-    flaggedAddresses:
-      result.evidence && result.evidence.repeatedByteAddresses > 0 ? addresses : [],
-    patterns: result.evidence
-      ? {
-          sequentialPairs: result.evidence.sequentialPairs,
-          repeatedByteAddresses: result.evidence.repeatedByteAddresses,
-          meanEntropy: result.evidence.meanEntropy,
-        }
-      : null,
+    flaggedAddresses: repeated > 0 ? addresses : [],
+    patterns:
+      evidence.reason === 'no_data'
+        ? null
+        : {
+            sequentialPairs: evidence.sequentialPairs || 0,
+            repeatedByteAddresses: repeated,
+            meanEntropy: evidence.meanEntropy || 0,
+          },
     derivationHypothesis:
       result.score > 0.5
         ? 'vanity_or_sequential_generator'
