@@ -1,20 +1,45 @@
 // src/graph/traversal.js
 // Breadth-first traversal over an adjacency list. The graph is supplied as
 // `{ from: [{to, weight, meta?}, ...] }`; the walk is bounded by
-// `maxDepth` and never revisits a node. The output `{nodes, edges}` is
-// JSON-serialisable and ready for downstream heuristics.
+// `MAX_GRAPH_DEPTH` (overridable via options) and never revisits a node. The
+// output `{nodes, edges}` is JSON-serialisable and ready for downstream
+// heuristics.
 
 const { validateAddress } = require('../utils/checksum');
 
-function bfs(start, adjacency, { maxDepth = 3, getNeighbors } = {}) {
+const DEFAULT_MAX_DEPTH = 3;
+const ENV_MAX_DEPTH = 'MAX_GRAPH_DEPTH';
+
+function resolveMaxDepth(value) {
+  if (value == null) {
+    const envValue = process.env[ENV_MAX_DEPTH];
+    if (envValue != null && envValue !== '') {
+      const parsed = Number.parseInt(envValue, 10);
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed;
+      }
+    }
+    return DEFAULT_MAX_DEPTH;
+  }
+  if (!Number.isFinite(value) || value < 0) {
+    throw new RangeError('maxDepth must be a non-negative finite number');
+  }
+  return Math.floor(value);
+}
+
+function bfs(start, adjacency, { maxDepth, getNeighbors } = {}) {
   if (typeof start !== 'string') {
     throw new TypeError('bfs start must be a string wallet address');
   }
   const root = validateAddress(start);
-  const limit = Number.isFinite(maxDepth) ? Math.max(0, Math.floor(maxDepth)) : 3;
-  const neighbors = getNeighbors || ((node) => adjacency[node] || []);
+  const limit = resolveMaxDepth(maxDepth);
+  const neighbors =
+    typeof getNeighbors === 'function'
+      ? getNeighbors
+      : (node) => (adjacency && adjacency[node]) || [];
 
-  const nodes = new Set([root]);
+  const visited = new Set([root]);
+  const nodes = [root];
   const edges = [];
   let frontier = [root];
   let depth = 0;
@@ -26,15 +51,20 @@ function bfs(start, adjacency, { maxDepth = 3, getNeighbors } = {}) {
       for (const hop of hops) {
         if (!hop || !hop.to) continue;
         const target = validateAddress(hop.to);
-        edges.push({
+        const edge = {
           from: node,
           to: target,
           depth: depth + 1,
           weight: typeof hop.weight === 'number' ? hop.weight : 1,
           meta: hop.meta || null,
-        });
-        if (!nodes.has(target)) {
-          nodes.add(target);
+        };
+        // Same-target edges (e.g. parallel bridges) are not deduped — each hop
+        // is a separate observation, so a second edge to an already-visited
+        // node is still meaningful and must be recorded.
+        edges.push(edge);
+        if (!visited.has(target)) {
+          visited.add(target);
+          nodes.push(target);
           next.push(target);
         }
       }
@@ -46,9 +76,14 @@ function bfs(start, adjacency, { maxDepth = 3, getNeighbors } = {}) {
   return {
     root,
     depth,
-    nodes: Array.from(nodes),
+    nodes,
     edges,
   };
 }
 
-module.exports = { bfs };
+module.exports = {
+  bfs,
+  resolveMaxDepth,
+  DEFAULT_MAX_DEPTH,
+  ENV_MAX_DEPTH,
+};
