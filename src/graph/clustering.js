@@ -3,6 +3,18 @@
 // ranking. The implementation is intentionally O(N + E) with a union-find
 // structure; for the wallet-graph sizes Filament sees in practice (≤ a
 // few thousand nodes per query) this is comfortably fast.
+//
+// The module is structural: it does NOT validate or normalise addresses.
+// Edges are expected to come from `src/graph/traversal.js`, which already
+// checksum-normalises its `from`/`to` fields. Validation at this layer
+// would be wasted work and would also make the module harder to unit-test
+// in isolation.
+//
+// Self-loop convention: an edge where `from === to` contributes TWICE to
+// the weighted degree of that node (once for the source endpoint, once for
+// the target endpoint). This matches the standard undirected-graph
+// convention and keeps the math symmetric regardless of how the loop is
+// recorded in the edge list.
 
 class UnionFind {
   constructor() {
@@ -23,7 +35,8 @@ class UnionFind {
     while (this.parent.get(root) !== root) {
       root = this.parent.get(root);
     }
-    // Path compression.
+    // Path compression: flatten every visited node directly to the root so
+    // future `find` calls on the same set are O(1) amortised.
     let cur = x;
     while (this.parent.get(cur) !== root) {
       const next = this.parent.get(cur);
@@ -48,6 +61,10 @@ class UnionFind {
       this.rank.set(ra, rankA + 1);
     }
   }
+
+  size() {
+    return this.parent.size;
+  }
 }
 
 function computeComponents(edges) {
@@ -67,17 +84,31 @@ function computeComponents(edges) {
   return Array.from(groups.values()).map((members) => members.slice().sort());
 }
 
-function rankByDegree(edges, { weight = (e) => (e && e.weight) || 1 } = {}) {
+const DEFAULT_WEIGHT = (e) => {
+  if (!e) return 1;
+  const w = e.weight;
+  return typeof w === 'number' ? w : 1;
+};
+
+function rankByDegree(edges, { weight = DEFAULT_WEIGHT } = {}) {
   const degree = new Map();
   for (const edge of edges || []) {
-    if (!edge) continue;
-    const w = weight(edge);
+    if (!edge || !edge.from || !edge.to) continue;
+    const w = Number(weight(edge));
+    // NaN / +Infinity / -Infinity carry no meaningful magnitude; skip them
+    // rather than poisoning the degree sum.
+    if (!Number.isFinite(w)) continue;
+    if (w === 0) continue; // zero-weight edges carry no information
     degree.set(edge.from, (degree.get(edge.from) || 0) + w);
     degree.set(edge.to, (degree.get(edge.to) || 0) + w);
   }
   return Array.from(degree.entries())
     .map(([address, score]) => ({ address, score }))
-    .sort((a, b) => b.score - a.score);
+    // Primary sort: highest weighted degree first.
+    // Secondary sort: ascending address, so ties have a stable,
+    // deterministic order across runs (important for snapshot tests
+    // and downstream consumers that join on ranking position).
+    .sort((a, b) => (b.score - a.score) || a.address.localeCompare(b.address));
 }
 
 function cluster(edges) {
