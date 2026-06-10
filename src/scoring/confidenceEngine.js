@@ -24,6 +24,22 @@ const DEFAULT_WEIGHTS = Object.freeze({
 
 const TIER_THRESHOLDS = Object.freeze({ high: 0.70, probable: 0.45 });
 
+// `entry` is the per-heuristic result from a heuristic module. It MAY be
+// missing or partially populated; we coerce defensively because the
+// engine is the last line of defence before the result reaches a tool.
+function normaliseEntry(entry) {
+  if (!entry || typeof entry !== 'object') {
+    return { score: 0, evidence: null, fired: false };
+  }
+  const rawScore = Number(entry.score);
+  const score = Number.isFinite(rawScore) ? rawScore : 0;
+  return {
+    score,
+    evidence: entry.evidence == null ? null : entry.evidence,
+    fired: Boolean(entry.fired),
+  };
+}
+
 function normalizeWeights(weights) {
   // When callers pass a custom weights object, only the keys they
   // specified count. Unspecified heuristics contribute 0. This is
@@ -38,7 +54,15 @@ function normalizeWeights(weights) {
     return { ...DEFAULT_WEIGHTS };
   }
   const merged = {};
-  for (const k of keys) merged[k] = Number(weights[k] || 0);
+  for (const k of keys) {
+    const raw = Number(weights[k]);
+    // Drop NaN / ±Infinity from the custom weights — they would
+    // otherwise propagate into the renormalised sum and poison the
+    // final score.
+    if (!Number.isFinite(raw)) continue;
+    if (raw < 0) continue; // negative weights are nonsensical
+    merged[k] = raw;
+  }
   const total = Object.values(merged).reduce((acc, w) => acc + w, 0);
   if (total === 0) {
     return { ...DEFAULT_WEIGHTS };
@@ -60,13 +84,16 @@ function tierFor(score) {
 }
 
 function aggregate(perHeuristic, { weights } = {}) {
+  if (!perHeuristic || typeof perHeuristic !== 'object' || Array.isArray(perHeuristic)) {
+    perHeuristic = {};
+  }
   const w = normalizeWeights(weights);
   const breakdown = [];
   let weightedSum = 0;
   let weightTotal = 0;
   for (const [name, weight] of Object.entries(w)) {
-    const entry = perHeuristic[name] || { score: 0, evidence: null, fired: false };
-    const score = clamp01(Number(entry.score || 0));
+    const entry = normaliseEntry(perHeuristic[name]);
+    const score = clamp01(entry.score);
     const contribution = score * weight;
     weightedSum += contribution;
     weightTotal += weight;
@@ -74,9 +101,9 @@ function aggregate(perHeuristic, { weights } = {}) {
       heuristic: name,
       weight,
       score,
-      fired: Boolean(entry.fired),
+      fired: entry.fired,
       contribution,
-      evidence: entry.evidence || null,
+      evidence: entry.evidence,
     });
   }
   const aggregateScore = weightTotal > 0 ? weightedSum / weightTotal : 0;
@@ -89,7 +116,7 @@ function aggregate(perHeuristic, { weights } = {}) {
 }
 
 function clamp01(n) {
-  if (Number.isNaN(n)) return 0;
+  if (!Number.isFinite(n)) return 0;
   if (n < 0) return 0;
   if (n > 1) return 1;
   return n;
@@ -102,4 +129,5 @@ module.exports = {
   tierFor,
   aggregate,
   clamp01,
+  normaliseEntry,
 };
