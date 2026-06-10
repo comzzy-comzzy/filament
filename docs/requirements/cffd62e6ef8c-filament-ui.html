@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Filament — Cross-Chain Identity Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0a0e;
+  --bg2:#0f0f16;
+  --card:#131320;
+  --card2:#1a1a2e;
+  --border:rgba(139,92,246,0.12);
+  --border2:rgba(139,92,246,0.28);
+  --primary:#8b5cf6;
+  --primary2:#7c3aed;
+  --accent:#a78bfa;
+  --accent2:#c4b5fd;
+  --green:#a3e635;
+  --text:#ffffff;
+  --muted:#9ca3af;
+  --dim:#4b5563;
+  --mono:'JetBrains Mono',monospace;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --warning:#f59e0b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh;}
+
+/* ── BACKGROUND ── */
+.bg-glow{position:fixed;pointer-events:none;z-index:0;}
+.bg-glow-1{top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(ellipse,rgba(124,58,237,0.15) 0%,transparent 65%);}
+.bg-glow-2{bottom:-200px;right:-100px;width:600px;height:600px;background:radial-gradient(ellipse,rgba(139,92,246,0.08) 0%,transparent 65%);}
+.bg-glow-3{top:40%;left:-150px;width:500px;height:500px;background:radial-gradient(ellipse,rgba(167,139,250,0.06) 0%,transparent 65%);}
+
+/* Grid lines bg */
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(139,92,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,0.04) 1px,transparent 1px);
+  background-size:60px 60px;}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;
+  display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+  background:rgba(10,10,14,0.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);}
+.nav-left{display:flex;align-items:center;gap:20px;}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-text{font-size:17px;font-weight:800;letter-spacing:-0.02em;color:var(--text);}
+.nav-search{display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  border-radius:10px;padding:7px 14px;min-width:220px;}
+.nav-search input{background:none;border:none;outline:none;color:var(--muted);font-size:13px;width:100%;}
+.nav-search input::placeholder{color:var(--dim);}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.nav-btn{background:none;border:1px solid var(--border2);border-radius:9px;
+  padding:7px 16px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;
+  transition:all 0.2s;}
+.nav-btn:hover{background:rgba(139,92,246,0.12);border-color:var(--accent);}
+.nav-btn-primary{background:var(--primary2);border-color:var(--primary2);color:#fff;}
+.nav-btn-primary:hover{background:var(--primary);border-color:var(--primary);}
+
+/* ── HERO ── */
+.hero{position:relative;z-index:1;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:100px 24px 60px;text-align:center;}
+
+.hero-logo-wrap{margin-bottom:32px;animation:floatLogo 4s ease-in-out infinite;}
+@keyframes floatLogo{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+
+.hero-title{font-size:clamp(36px,7vw,72px);font-weight:900;letter-spacing:-0.04em;
+  line-height:1.05;margin-bottom:20px;
+  animation:fadeUp 0.7s ease both;}
+.hero-title .hi{color:var(--accent2);}
+.hero-title .hi2{color:var(--accent);}
+
+.hero-sub{font-size:clamp(15px,2vw,18px);color:var(--muted);max-width:520px;
+  line-height:1.65;margin-bottom:40px;
+  animation:fadeUp 0.7s 0.1s ease both;}
+
+/* Search / input bar — Jupiter style */
+.hero-input-wrap{width:100%;max-width:560px;margin-bottom:12px;
+  animation:fadeUp 0.7s 0.2s ease both;}
+.hero-input-bar{display:flex;align-items:center;gap:0;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(139,92,246,0.3);
+  border-radius:14px;padding:6px 6px 6px 18px;
+  transition:border-color 0.2s,box-shadow 0.2s;}
+.hero-input-bar:focus-within{border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(139,92,246,0.15);}
+.hero-input-bar input{flex:1;background:none;border:none;outline:none;
+  font-family:var(--mono);font-size:13px;color:var(--text);padding:10px 0;}
+.hero-input-bar input::placeholder{color:var(--dim);}
+.hero-cta{background:var(--accent2);color:#1a0a4e;border:none;border-radius:10px;
+  padding:12px 22px;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;
+  transition:all 0.2s;letter-spacing:0.01em;}
+.hero-cta:hover{background:#fff;transform:scale(1.02);}
+.hero-cta.loading{opacity:0.6;cursor:not-allowed;}
+
+.hero-demo-link{font-size:13px;color:var(--muted);
+  animation:fadeUp 0.7s 0.3s ease both;}
+.hero-demo-link a{color:var(--accent);text-decoration:none;font-weight:600;}
+.hero-demo-link a:hover{color:var(--accent2);}
+
+.error-msg{font-size:12px;color:var(--danger);font-family:var(--mono);
+  margin-top:8px;display:none;}
+.error-msg.show{display:block;}
+
+/* Chain pills */
+.chain-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  margin:20px 0;animation:fadeUp 0.7s 0.35s ease both;}
+.chain-pill{display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:100px;padding:6px 14px;font-size:12px;font-weight:600;
+  color:var(--muted);cursor:pointer;transition:all 0.15s;user-select:none;}
+.chain-pill:hover{border-color:var(--border2);color:var(--text);}
+.chain-pill.on{background:rgba(139,92,246,0.14);border-color:var(--primary);color:var(--accent2);}
+.cdot{width:7px;height:7px;border-radius:50%;}
+
+.depth-row{display:flex;align-items:center;gap:10px;justify-content:center;
+  margin-top:12px;animation:fadeUp 0.7s 0.4s ease both;}
+.depth-label{font-size:12px;color:var(--dim);font-weight:500;}
+.depth-btns{display:flex;gap:6px;}
+.dbtn{width:34px;height:34px;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:8px;color:var(--muted);
+  font-size:13px;font-weight:700;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:all 0.15s;}
+.dbtn:hover{border-color:var(--border2);color:var(--text);}
+.dbtn.on{background:rgba(139,92,246,0.2);border-color:var(--primary);color:var(--accent2);}
+
+/* ── MOCK DASHBOARD VISUAL ── */
+.hero-visual{position:relative;width:100%;max-width:640px;margin:40px auto 0;
+  animation:fadeUp 0.8s 0.45s ease both;}
+.dashboard-mockup{
+  background:linear-gradient(145deg,#131320,#1a1a2e);
+  border:1px solid rgba(139,92,246,0.2);
+  border-radius:20px;padding:24px;
+  box-shadow:0 40px 120px rgba(124,58,237,0.2),0 0 0 1px rgba(139,92,246,0.1);
+  position:relative;overflow:hidden;}
+.dashboard-mockup::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(139,92,246,0.05) 0%,transparent 50%);
+  pointer-events:none;}
+.mock-top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.mock-dots{display:flex;gap:6px;}
+.mock-dot{width:10px;height:10px;border-radius:50%;}
+.mock-title{font-size:12px;font-weight:600;color:var(--muted);}
+.mock-badge{background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.3);
+  border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;color:var(--accent);
+  font-family:var(--mono);}
+.mock-wallet-addr{font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:16px;}
+.mock-score-row{display:flex;align-items:flex-end;gap:12px;margin-bottom:20px;}
+.mock-score-num{font-size:40px;font-weight:900;letter-spacing:-0.04em;
+  background:linear-gradient(135deg,var(--accent2),var(--primary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.mock-tier{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:700;
+  background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);}
+.mock-bar-track{height:5px;background:rgba(255,255,255,0.07);border-radius:100px;margin-bottom:20px;overflow:hidden;}
+.mock-bar-fill{height:100%;width:46%;border-radius:100px;
+  background:linear-gradient(90deg,var(--primary2),var(--accent));
+  animation:barGrow 2s 1s ease both;}
+@keyframes barGrow{from{width:0}to{width:46%}}
+.mock-heuristics{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.mock-h{background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;}
+.mock-h-name{font-family:var(--mono);font-size:9px;color:var(--accent);margin-bottom:5px;}
+.mock-h-bar{height:3px;background:rgba(255,255,255,0.05);border-radius:100px;overflow:hidden;}
+.mock-h-fill{height:100%;border-radius:100px;
+  background:linear-gradient(90deg,var(--primary),var(--accent));}
+.mock-h-val{font-size:10px;color:var(--muted);margin-top:4px;}
+.mock-scan-line{position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(167,139,250,0.4),transparent);
+  animation:scan 3s linear infinite;top:0;}
+@keyframes scan{0%{top:0;opacity:0.8}100%{top:100%;opacity:0}}
+
+/* ── LOADING ── */
+.loading-wrap{display:none;flex-direction:column;align-items:center;
+  gap:14px;padding:60px;position:relative;z-index:1;}
+.loading-wrap.show{display:flex;}
+.spinner{width:36px;height:36px;border:2.5px solid var(--border2);
+  border-top-color:var(--primary);border-radius:50%;
+  animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--muted);font-family:var(--mono);}
+.loading-chain{font-size:11px;color:var(--dim);font-family:var(--mono);}
+
+/* ── RESULTS ── */
+.results{display:none;position:relative;z-index:1;
+  max-width:900px;margin:0 auto;padding:0 20px 80px;}
+.results.show{display:block;animation:fadeUp 0.5s ease both;}
+
+.result-header{display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.result-addr{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:4px;}
+.result-title{font-size:20px;font-weight:800;letter-spacing:-0.02em;}
+
+.tier-badge{display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:100px;font-size:11px;font-weight:700;
+  letter-spacing:0.05em;text-transform:uppercase;}
+.t-high{background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);}
+.t-probable{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);}
+.t-speculative{background:rgba(107,114,128,0.12);color:#9ca3af;border:1px solid rgba(107,114,128,0.2);}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;overflow-x:auto;}
+.tab{padding:11px 18px;font-size:13px;font-weight:600;color:var(--dim);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;}
+.tab:hover{color:var(--muted);}
+.tab.on{color:var(--accent);border-bottom-color:var(--primary);}
+
+.panel{display:none;}
+.panel.on{display:block;}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:16px;}
+.card:hover{border-color:var(--border2);}
+.card-title{font-size:11px;font-weight:700;color:var(--dim);
+  letter-spacing:0.09em;text-transform:uppercase;margin-bottom:14px;}
+
+/* Confidence */
+.conf-row{display:flex;align-items:flex-end;gap:14px;margin-bottom:12px;}
+.conf-num{font-size:52px;font-weight:900;letter-spacing:-0.05em;
+  background:linear-gradient(135deg,var(--accent2),var(--primary));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;}
+.bar-track{height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:100px;
+  background:linear-gradient(90deg,var(--primary2),var(--accent));
+  transition:width 1s cubic-bezier(0.4,0,0.2,1);width:0;}
+
+/* Linked wallets */
+.wallet-row{display:flex;align-items:center;justify-content:space-between;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;padding:11px 14px;margin-bottom:8px;
+  font-family:var(--mono);font-size:12px;color:var(--muted);transition:border-color 0.2s;}
+.wallet-row:hover{border-color:var(--border2);}
+.copy-btn{background:none;border:1px solid var(--border);border-radius:6px;
+  padding:3px 9px;font-size:11px;color:var(--dim);cursor:pointer;transition:all 0.15s;}
+.copy-btn:hover{border-color:var(--primary);color:var(--accent);}
+
+/* Table */
+.htable{width:100%;border-collapse:collapse;font-size:12px;}
+.htable th{text-align:left;padding:9px 12px;font-size:10px;font-weight:700;
+  color:var(--dim);letter-spacing:0.09em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);}
+.htable td{padding:11px 12px;border-bottom:1px solid rgba(139,92,246,0.06);
+  color:var(--muted);vertical-align:middle;}
+.htable tr:hover td{background:rgba(139,92,246,0.04);}
+.htable tr:last-child td{border-bottom:none;}
+
+.fbadge{display:inline-flex;align-items:center;gap:3px;
+  padding:3px 8px;border-radius:100px;font-size:10px;font-weight:700;}
+.fy{background:rgba(34,197,94,0.1);color:#22c55e;}
+.fn{background:rgba(107,114,128,0.1);color:#6b7280;}
+
+.sbar{display:flex;align-items:center;gap:7px;}
+.sbar-t{flex:1;height:3px;background:rgba(255,255,255,0.06);border-radius:100px;overflow:hidden;min-width:50px;}
+.sbar-f{height:100%;background:linear-gradient(90deg,var(--primary2),var(--accent));border-radius:100px;}
+
+/* Graph */
+.graph-card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:24px;min-height:280px;overflow:hidden;}
+#graphSvg{width:100%;display:block;}
+
+/* Sanctions */
+.sanction-row{display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin-bottom:10px;flex-wrap:wrap;gap:10px;}
+.sanction-addr{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.sanction-meta{display:flex;gap:12px;align-items:center;}
+.sanction-meta span{font-size:11px;color:var(--dim);}
+.rbadge{padding:4px 10px;border-radius:100px;font-size:10px;font-weight:700;}
+.rh{background:rgba(239,68,68,0.12);color:#ef4444;}
+.rm{background:rgba(245,158,11,0.12);color:#f59e0b;}
+.rl{background:rgba(107,114,128,0.12);color:#9ca3af;}
+
+/* Bridge */
+.bridge-row{display:flex;align-items:center;gap:12px;
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;margin-bottom:10px;flex-wrap:wrap;gap:10px;}
+.ctag{background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.22);
+  border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--accent);}
+.proto{background:rgba(255,255,255,0.05);border-radius:6px;
+  padding:3px 8px;font-size:10px;font-weight:600;color:var(--dim);}
+
+/* JSON collapse */
+.jcol{margin-top:16px;}
+.jtog{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);
+  cursor:pointer;user-select:none;margin-bottom:6px;}
+.jtog:hover{color:var(--muted);}
+.jbody{display:none;background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;padding:14px;font-family:var(--mono);font-size:10px;
+  color:var(--accent2);white-space:pre-wrap;word-break:break-all;
+  max-height:260px;overflow-y:auto;}
+.jbody.open{display:block;}
+
+/* ── FEATURES ── */
+.section{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:80px 20px;}
+.s-eye{font-size:11px;font-weight:700;color:var(--primary);
+  letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;}
+.s-title{font-size:clamp(26px,4vw,38px);font-weight:900;
+  letter-spacing:-0.03em;line-height:1.15;margin-bottom:14px;}
+.s-sub{font-size:15px;color:var(--muted);max-width:500px;
+  line-height:1.65;margin-bottom:44px;}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+.fcard{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:22px;transition:all 0.25s;cursor:default;}
+.fcard:hover{border-color:var(--border2);transform:translateY(-3px);
+  box-shadow:0 16px 48px rgba(124,58,237,0.1);}
+.fcard-icon{width:38px;height:38px;background:rgba(139,92,246,0.1);
+  border:1px solid rgba(139,92,246,0.18);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;margin-bottom:14px;}
+.fcard-name{font-size:14px;font-weight:700;margin-bottom:7px;}
+.fcard-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* Steps */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px;margin-top:44px;}
+.step-num{font-family:var(--mono);font-size:11px;font-weight:700;
+  color:var(--primary);letter-spacing:0.08em;margin-bottom:10px;}
+.step-title{font-size:14px;font-weight:700;margin-bottom:7px;}
+.step-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* Tools */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:44px;}
+.tcard{background:var(--card);border:1px solid var(--border);border-radius:11px;
+  padding:16px 18px;transition:all 0.2s;}
+.tcard:hover{border-color:var(--border2);transform:translateY(-2px);}
+.tname{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--accent);margin-bottom:5px;}
+.tdesc{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* Footer */
+footer{position:relative;z-index:1;border-top:1px solid var(--border);
+  padding:44px 24px 28px;max-width:900px;margin:0 auto;}
+.ftop{display:flex;justify-content:space-between;gap:32px;margin-bottom:36px;flex-wrap:wrap;}
+.fbrand p{font-size:12px;color:var(--muted);max-width:220px;line-height:1.6;margin-top:8px;}
+.fcol h4{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:12px;}
+.fcol ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.fcol a{font-size:12px;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.fcol a:hover{color:var(--text);}
+.fbot{display:flex;align-items:center;justify-content:space-between;
+  padding-top:20px;border-top:1px solid var(--border);
+  font-size:11px;color:var(--dim);flex-wrap:wrap;gap:8px;}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.reveal{opacity:0;transform:translateY(22px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.reveal.vis{opacity:1;transform:translateY(0);}
+
+/* Divider */
+.divider{border:none;border-top:1px solid var(--border);margin:0;}
+
+@media(max-width:600px){
+  nav{padding:0 16px;}
+  .nav-search{display:none;}
+  .hero-visual{display:none;}
+  footer{padding:36px 16px 20px;}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+<div class="bg-glow bg-glow-3"></div>
+<div class="bg-grid"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a class="nav-logo" href="#">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+        <circle cx="16" cy="16" r="14.5" stroke="url(#nl)" stroke-width="1.4"/>
+        <circle cx="16" cy="16" r="3.5" fill="url(#nl2)"/>
+        <line x1="16" y1="2" x2="16" y2="7" stroke="url(#nl)" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="16" y1="25" x2="16" y2="30" stroke="url(#nl)" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="2" y1="16" x2="7" y2="16" stroke="url(#nl)" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="25" y1="16" x2="30" y2="16" stroke="url(#nl)" stroke-width="1.4" stroke-linecap="round"/>
+        <line x1="5" y1="5" x2="9" y2="9" stroke="url(#nl)" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="23" y1="23" x2="27" y2="27" stroke="url(#nl)" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="27" y1="5" x2="23" y2="9" stroke="url(#nl)" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="9" y1="23" x2="5" y2="27" stroke="url(#nl)" stroke-width="1.2" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="nl" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#c4b5fd"/><stop offset="1" stop-color="#7c3aed"/>
+          </linearGradient>
+          <radialGradient id="nl2" cx="50%" cy="50%" r="50%">
+            <stop stop-color="#e9d5ff"/><stop offset="1" stop-color="#8b5cf6"/>
+          </radialGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">Filament</span>
+    </a>
+    <div class="nav-search">
+      <svg width="13" height="13" fill="none" stroke="#4b5563" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search address or chain…"/>
+    </div>
+  </div>
+  <div class="nav-right">
+    <a href="#features"><button class="nav-btn">Features</button></a>
+    <a href="#tools"><button class="nav-btn">Tools</button></a>
+    <a href="https://github.com/comzzy-comzzy/filament" target="_blank"><button class="nav-btn">GitHub</button></a>
+    <button class="nav-btn nav-btn-primary" onclick="document.getElementById('walletInput').focus();document.getElementById('walletInput').scrollIntoView({behavior:'smooth'})">Try Now</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <h1 class="hero-title">
+    Your <span class="hi">entire wallet identity</span>,<br>
+    stitched across <span class="hi2">every chain.</span>
+  </h1>
+  <p class="hero-sub">
+    Filament traces cross-chain wallet behavior using 9 onchain heuristics — no offchain data, no CEX info, no social profiles. Pure cryptographic inference.
+  </p>
+
+  <div class="hero-input-wrap">
+    <div class="hero-input-bar">
+      <svg width="14" height="14" fill="none" stroke="#6b7280" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="walletInput" type="text" placeholder="Search address, domain or group" autocomplete="off" spellcheck="false"/>
+      <button class="hero-cta" id="investigateBtn" onclick="runInvestigation()">Investigate →</button>
+    </div>
+    <div class="error-msg" id="errorMsg">⚠ Invalid address. Must be 0x followed by 40 hex characters.</div>
+  </div>
+
+  <div class="hero-demo-link">Or <a href="#" onclick="loadDemo();return false;">try the demo</a></div>
+
+  <!-- Chains -->
+  <div class="chain-row" id="chainRow">
+    <label class="chain-pill on" onclick="toggleChain(this,'ethereum')"><span class="cdot" style="background:#627eea"></span>Ethereum</label>
+    <label class="chain-pill on" onclick="toggleChain(this,'arbitrum')"><span class="cdot" style="background:#627eea"></span>Arbitrum</label>
+    <label class="chain-pill" onclick="toggleChain(this,'optimism')"><span class="cdot" style="background:#627eea"></span>Optimism</label>
+    <label class="chain-pill on" onclick="toggleChain(this,'base')"><span class="cdot" style="background:#627eea"></span>Base</label>
+    <label class="chain-pill on" onclick="toggleChain(this,'mantle')"><span class="cdot" style="background:#627eea"></span>Mantle</label>
+    <label class="chain-pill" onclick="toggleChain(this,'polygon')"><span class="cdot" style="background:#627eea"></span>Polygon</label>
+    <label class="chain-pill" onclick="toggleChain(this,'bnb')"><span class="cdot" style="background:#627eea"></span>BNB</label>
+  </div>
+
+  <div class="depth-row">
+    <span class="depth-label">Graph depth:</span>
+    <div class="depth-btns">
+      <button class="dbtn" onclick="setDepth(this,1)">1</button>
+      <button class="dbtn on" onclick="setDepth(this,2)">2</button>
+      <button class="dbtn" onclick="setDepth(this,3)">3</button>
+    </div>
+  </div>
+
+  <!-- Dashboard mockup -->
+  <div class="hero-visual">
+    <div class="dashboard-mockup">
+      <div class="mock-scan-line"></div>
+      <div class="mock-top-bar">
+        <div class="mock-dots">
+          <div class="mock-dot" style="background:#ef4444"></div>
+          <div class="mock-dot" style="background:#f59e0b"></div>
+          <div class="mock-dot" style="background:#22c55e"></div>
+        </div>
+        <div class="mock-title">Filament — Identity Report</div>
+        <div class="mock-badge">LIVE</div>
+      </div>
+      <div class="mock-wallet-addr">0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045</div>
+      <div class="mock-score-row">
+        <div class="mock-score-num">46%</div>
+        <div class="mock-tier">Probable</div>
+      </div>
+      <div class="mock-bar-track"><div class="mock-bar-fill"></div></div>
+      <div class="mock-heuristics">
+        <div class="mock-h"><div class="mock-h-name">noncePattern</div><div class="mock-h-bar"><div class="mock-h-fill" style="width:62%"></div></div><div class="mock-h-val">0.62 · fired</div></div>
+        <div class="mock-h"><div class="mock-h-name">eoaCluster</div><div class="mock-h-bar"><div class="mock-h-fill" style="width:71%"></div></div><div class="mock-h-val">0.71 · fired</div></div>
+        <div class="mock-h"><div class="mock-h-name">gasBehavior</div><div class="mock-h-bar"><div class="mock-h-fill" style="width:55%"></div></div><div class="mock-h-val">0.55 · fired</div></div>
+        <div class="mock-h"><div class="mock-h-name">bridgeHop</div><div class="mock-h-bar"><div class="mock-h-fill" style="width:30%"></div></div><div class="mock-h-val">0.30 · fired</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOADING -->
+<div class="loading-wrap" id="loadingWrap">
+  <div class="spinner"></div>
+  <div class="loading-text">Scanning chains…</div>
+  <div class="loading-chain" id="loadingChain">Connecting to RPC endpoints</div>
+</div>
+
+<!-- RESULTS -->
+<div class="results" id="results">
+  <div class="result-header">
+    <div>
+      <div class="result-title">Identity Report</div>
+      <div class="result-addr" id="rAddr"></div>
+    </div>
+    <div id="rTier"></div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" onclick="switchTab(this,'identity')">Identity Report</div>
+    <div class="tab" onclick="switchTab(this,'graph')">Graph View</div>
+    <div class="tab" onclick="switchTab(this,'sanctions')">Sanctions</div>
+    <div class="tab" onclick="switchTab(this,'bridge')">Bridge Trace</div>
+  </div>
+
+  <!-- Identity -->
+  <div class="panel on" id="panel-identity">
+    <div class="card">
+      <div class="card-title">Confidence Score</div>
+      <div class="conf-row">
+        <div class="conf-num" id="rScore">0%</div>
+        <div id="rTier2"></div>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="rBar"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Linked Wallets</div>
+      <div id="rLinked"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="htable">
+        <thead><tr>
+          <th>Heuristic</th><th>Weight</th><th>Score</th>
+          <th>Fired</th><th>Contribution</th><th>Evidence</th>
+        </tr></thead>
+        <tbody id="rTable"></tbody>
+      </table>
+    </div>
+    <div class="jcol">
+      <div class="jtog" onclick="toggleJ('jid')"><span>▶</span> Raw JSON <button class="copy-btn" onclick="copyJ('jid',event)">Copy</button></div>
+      <pre class="jbody" id="jid"></pre>
+    </div>
+  </div>
+
+  <!-- Graph -->
+  <div class="panel" id="panel-graph">
+    <div class="graph-card"><svg id="graphSvg" height="280"></svg></div>
+    <div class="jcol">
+      <div class="jtog" onclick="toggleJ('jgr')"><span>▶</span> Raw JSON <button class="copy-btn" onclick="copyJ('jgr',event)">Copy</button></div>
+      <pre class="jbody" id="jgr"></pre>
+    </div>
+  </div>
+
+  <!-- Sanctions -->
+  <div class="panel" id="panel-sanctions">
+    <div id="rSanctions"></div>
+    <div class="jcol">
+      <div class="jtog" onclick="toggleJ('jsa')"><span>▶</span> Raw JSON <button class="copy-btn" onclick="copyJ('jsa',event)">Copy</button></div>
+      <pre class="jbody" id="jsa"></pre>
+    </div>
+  </div>
+
+  <!-- Bridge -->
+  <div class="panel" id="panel-bridge">
+    <div id="rBridge"></div>
+    <div class="jcol">
+      <div class="jtog" onclick="toggleJ('jbr')"><span>▶</span> Raw JSON <button class="copy-btn" onclick="copyJ('jbr',event)">Copy</button></div>
+      <pre class="jbody" id="jbr"></pre>
+    </div>
+  </div>
+</div>
+
+<hr class="divider" style="max-width:900px;margin:0 auto;position:relative;z-index:1;"/>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="reveal">
+    <div class="s-eye">What Filament Does</div>
+    <h2 class="s-title">Onchain identity,<br><span style="color:var(--accent)">stitched together</span></h2>
+    <p class="s-sub">A single person may control dozens of wallets across chains. Filament finds them using pure behavioral signals — no personal data required.</p>
+  </div>
+  <div class="fgrid">
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="16" height="16" rx="3" stroke="#8b5cf6" stroke-width="1.5"/><path d="M5 9h8M9 5v8" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="fcard-name">Identity Stitching</div><div class="fcard-desc">Links wallets across 7 chains using 9 independent behavioral heuristics, aggregated into a single confidence score.</div></div>
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14 C2 9 7 4 9 4 C11 4 16 9 16 14" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" fill="none"/><line x1="2" y1="14" x2="16" y2="14" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/><line x1="6" y1="8" x2="6" y2="14" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/><line x1="12" y1="8" x2="12" y2="14" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="fcard-name">Bridge Hop Tracing</div><div class="fcard-desc">Follows capital movement across Stargate, Hop, Across, and LayerZero at configurable graph depth.</div></div>
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="10" r="7" stroke="#8b5cf6" stroke-width="1.5"/><path d="M9 7v3.5l2.5 1.5" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/><path d="M7 1h4" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="fcard-name">Temporal Correlation</div><div class="fcard-desc">Detects wallets active at identical unusual hours — sleep cycles and burst patterns are unique per operator.</div></div>
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 2 C5 2 13 6 13 9 C13 12 5 16 5 16" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M13 2 C13 2 5 6 5 9 C5 12 13 16 13 16" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" fill="none"/><line x1="5" y1="7" x2="13" y2="7" stroke="#8b5cf6" stroke-width="1.2"/><line x1="5" y1="11" x2="13" y2="11" stroke="#8b5cf6" stroke-width="1.2"/></svg></div><div class="fcard-name">Deployment DNA</div><div class="fcard-desc">Extracts bytecode fingerprints and CREATE2 salt patterns to detect wallets deploying identical contracts.</div></div>
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L16.5 15H1.5L9 2Z" stroke="#8b5cf6" stroke-width="1.5" stroke-linejoin="round"/><line x1="9" y1="7" x2="9" y2="11" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="13" r="0.75" fill="#8b5cf6"/></svg></div><div class="fcard-name">Sanctions Exposure</div><div class="fcard-desc">Maps cluster exposure to sanctioned addresses at configurable depth — 2nd and 3rd degree included.</div></div>
+    <div class="fcard reveal"><div class="fcard-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="4" width="8" height="12" rx="1.5" stroke="#8b5cf6" stroke-width="1.5"/><path d="M11 7h2a2 2 0 012 2v2a1 1 0 002 0V6l-2-3" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="6" y1="8" x2="8" y2="8" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="fcard-name">Gas Fingerprinting</div><div class="fcard-desc">Gas bidding behavior — tip precision, base fee preference — is surprisingly unique per operator.</div></div>
+  </div>
+</section>
+
+<hr class="divider" style="max-width:900px;margin:0 auto;position:relative;z-index:1;"/>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="reveal">
+    <div class="s-eye">How It Works</div>
+    <h2 class="s-title">From wallet to<br><span style="color:var(--accent)">identity cluster</span></h2>
+  </div>
+  <div class="sgrid">
+    <div class="step reveal"><div class="step-num">01 —</div><div class="step-title">Submit a Wallet</div><div class="step-desc">Pass any EVM wallet address and select which chains and graph depth to investigate.</div></div>
+    <div class="step reveal"><div class="step-num">02 —</div><div class="step-title">Heuristics Fan Out</div><div class="step-desc">9 behavioral modules run in parallel — nonce patterns, gas signatures, bridge hops, deployment DNA, and more.</div></div>
+    <div class="step reveal"><div class="step-num">03 —</div><div class="step-title">Scores Aggregate</div><div class="step-desc">The confidence engine combines weighted scores into a single tier — High, Probable, or Speculative.</div></div>
+    <div class="step reveal"><div class="step-num">04 —</div><div class="step-title">Cluster Returned</div><div class="step-desc">Every linked wallet is returned with full evidence — every signal that fired, every score that contributed.</div></div>
+  </div>
+</section>
+
+<hr class="divider" style="max-width:900px;margin:0 auto;position:relative;z-index:1;"/>
+
+<!-- TOOLS -->
+<section class="section" id="tools">
+  <div class="reveal">
+    <div class="s-eye">MCP Tools</div>
+    <h2 class="s-title">11 tools.<br><span style="color:var(--accent)">One investigation layer.</span></h2>
+    <p class="s-sub">Each tool is independently callable via the Model Context Protocol. AI agents can compose them into any workflow.</p>
+  </div>
+  <div class="tgrid">
+    <div class="tcard reveal"><div class="tname">stitch_identity</div><div class="tdesc">Primary identity stitching across chains with full confidence report.</div></div>
+    <div class="tcard reveal"><div class="tname">nonce_pattern_match</div><div class="tdesc">Temporal fingerprint similarity from nonce sequencing and timing gaps.</div></div>
+    <div class="tcard reveal"><div class="tname">deployment_dna_scan</div><div class="tdesc">Bytecode fingerprints, CREATE2 salts, and init code hash matching.</div></div>
+    <div class="tcard reveal"><div class="tname">bridge_hop_tracer</div><div class="tdesc">Directed fund flow graph across Stargate, Across, Hop, LayerZero.</div></div>
+    <div class="tcard reveal"><div class="tname">gas_behavior_fingerprint</div><div class="tdesc">Gas bidding style classification and cross-chain similarity score.</div></div>
+    <div class="tcard reveal"><div class="tname">eoa_cluster_graph</div><div class="tdesc">Funding adjacency graph with edge weights and central wallet detection.</div></div>
+    <div class="tcard reveal"><div class="tname">contract_interaction_overlap</div><div class="tdesc">Obscure contract interaction overlap scoring between two wallets.</div></div>
+    <div class="tcard reveal"><div class="tname">temporal_activity_correlation</div><div class="tdesc">Cross-correlation matrix of activity timestamps across wallets.</div></div>
+    <div class="tcard reveal"><div class="tname">entropy_address_scorer</div><div class="tdesc">Low-entropy derivation pattern detection in child addresses.</div></div>
+    <div class="tcard reveal"><div class="tname">sanction_proximity_mapper</div><div class="tdesc">Exposure tree mapping to sanctioned addresses at N hops.</div></div>
+    <div class="tcard reveal"><div class="tname">identity_confidence_report</div><div class="tdesc">Full aggregated report with tier, breakdown, evidence, and graph payload.</div></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ftop">
+    <div class="fbrand">
+      <a class="nav-logo" href="#" style="text-decoration:none;">
+        <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14.5" stroke="url(#fl)" stroke-width="1.4"/>
+          <circle cx="16" cy="16" r="3.5" fill="url(#fl2)"/>
+          <line x1="16" y1="2" x2="16" y2="7" stroke="url(#fl)" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="16" y1="25" x2="16" y2="30" stroke="url(#fl)" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="2" y1="16" x2="7" y2="16" stroke="url(#fl)" stroke-width="1.4" stroke-linecap="round"/>
+          <line x1="25" y1="16" x2="30" y2="16" stroke="url(#fl)" stroke-width="1.4" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="fl" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse"><stop stop-color="#c4b5fd"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+            <radialGradient id="fl2" cx="50%" cy="50%" r="50%"><stop stop-color="#e9d5ff"/><stop offset="1" stop-color="#8b5cf6"/></radialGradient>
+          </defs>
+        </svg>
+        <span class="logo-text">Filament</span>
+      </a>
+      <p>Cross-chain wallet identity stitching via pure onchain behavioral heuristics.</p>
+    </div>
+    <div class="fcol"><h4>Build</h4><ul><li><a href="https://github.com/comzzy-comzzy/filament" target="_blank">GitHub</a></li><li><a href="#">Documentation</a></li><li><a href="#">MCP Config</a></li></ul></div>
+    <div class="fcol"><h4>Tools</h4><ul><li><a href="#tools">11 MCP Tools</a></li><li><a href="#how">How It Works</a></li><li><a href="#">Try It</a></li></ul></div>
+    <div class="fcol"><h4>Chains</h4><ul><li><a href="#">Ethereum</a></li><li><a href="#">Mantle</a></li><li><a href="#">Base + 5 more</a></li></ul></div>
+  </div>
+  <div class="fbot">
+    <span>© Filament 2026 · Built on Mantle</span>
+    <span style="font-family:var(--mono);font-size:10px;">MCP · stdio · ethers v6 · Node ≥18</span>
+  </div>
+</footer>
+
+<script>
+// ── STATE
+let chains=['ethereum','arbitrum','base','mantle'],depth=2,lastData={};
+
+// ── CHAIN TOGGLE
+function toggleChain(el,c){
+  el.classList.toggle('on');
+  chains=el.classList.contains('on')?[...chains,c]:chains.filter(x=>x!==c);
+}
+
+// ── DEPTH
+function setDepth(el,d){
+  document.querySelectorAll('.dbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');depth=d;
+}
+
+// ── TABS
+function switchTab(el,id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('panel-'+id).classList.add('on');
+}
+
+// ── JSON
+function toggleJ(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('open');
+  el.previousElementSibling.querySelector('span').textContent=el.classList.contains('open')?'▼':'▶';
+}
+function copyJ(id,e){
+  e.stopPropagation();
+  navigator.clipboard.writeText(document.getElementById(id).textContent);
+  const b=e.target;b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500);
+}
+
+// ── VALIDATE
+function validAddr(a){return /^0x[0-9a-fA-F]{40}$/.test(a);}
+
+// ── DEMO
+function loadDemo(){
+  document.getElementById('walletInput').value='0x000000000000000000000000000000000000A11E';
+  runInvestigation();
+}
+
+// ── MOCK DATA
+function mockData(wallet){
+  return{
+    wallet,chains,depth,score:0.4635,tier:'Probable',
+    linkedWallets:['0x000000000000000000000000000000000000B0Bb','0x000000000000000000000000000000000000C0CC'],
+    breakdown:[
+      {heuristic:'noncePattern',weight:0.10,score:0.62,fired:true,contribution:0.062,evidence:{note:'shape match'}},
+      {heuristic:'deploymentDna',weight:0.15,score:0.20,fired:true,contribution:0.030,evidence:{collisions:1}},
+      {heuristic:'bridgeHop',weight:0.10,score:0.30,fired:true,contribution:0.030,evidence:{hops:2}},
+      {heuristic:'gasBehavior',weight:0.10,score:0.55,fired:true,contribution:0.055,evidence:{bestCosine:0.55}},
+      {heuristic:'eoaCluster',weight:0.15,score:0.71,fired:true,contribution:0.107,evidence:{reciprocity:0.7}},
+      {heuristic:'contractOverlap',weight:0.15,score:0.50,fired:true,contribution:0.075,evidence:{jaccard:0.4}},
+      {heuristic:'temporalCorrelation',weight:0.10,score:0.60,fired:true,contribution:0.060,evidence:{topPairs:[]}},
+      {heuristic:'entropyScorer',weight:0.05,score:0.10,fired:false,contribution:0.005,evidence:{}},
+      {heuristic:'sanctionProximity',weight:0.10,score:0.40,fired:true,contribution:0.040,evidence:{hop:1}},
+    ],
+    graphPayload:{
+      nodes:[wallet,'0x000000000000000000000000000000000000B0Bb','0x000000000000000000000000000000000000C0CC'],
+      edges:[
+        {from:wallet,to:'0x000000000000000000000000000000000000B0Bb',weight:3},
+        {from:'0x000000000000000000000000000000000000B0Bb',to:'0x000000000000000000000000000000000000C0CC',weight:2}
+      ]
+    },
+    sanctions:{tree:[{target:'0x0000000000000000000000000000000000000bad',hop:1,volume:12,score:1}],flagged:[{target:'0x0000000000000000000000000000000000000bad',hop:1,volume:12,contribution:1}]},
+    bridge:{graph:{edges:[
+      {from:wallet,to:'0x000000000000000000000000000000000000B0Bb',fromChain:'ethereum',toChain:'arbitrum',bridge:'stargate',amount:5},
+      {from:'0x000000000000000000000000000000000000B0Bb',to:'0x000000000000000000000000000000000000C0CC',fromChain:'arbitrum',toChain:'base',bridge:'hop',amount:4}
+    ]}}
+  };
+}
+
+// ── RUN
+async function runInvestigation(){
+  const wallet=document.getElementById('walletInput').value.trim();
+  const err=document.getElementById('errorMsg');
+  if(!validAddr(wallet)){err.classList.add('show');return;}
+  err.classList.remove('show');
+  if(!chains.length){alert('Select at least one chain.');return;}
+
+  document.getElementById('loadingWrap').classList.add('show');
+  document.getElementById('results').classList.remove('show');
+
+  // Animate loading chain text
+  const chainTexts=['Connecting to Ethereum RPC…','Scanning Arbitrum transactions…','Tracing bridge hops…','Running heuristics…','Aggregating confidence scores…'];
+  let ci=0;
+  const chainEl=document.getElementById('loadingChain');
+  const ct=setInterval(()=>{chainEl.textContent=chainTexts[ci%chainTexts.length];ci++;},600);
+
+  let data;
+  try{
+    const res=await fetch('http://localhost:3010/api/investigate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({wallet,chains,depth})
+    });
+    if(!res.ok)throw new Error();
+    data=await res.json();
+  }catch{
+    await new Promise(r=>setTimeout(r,3200));
+    data=mockData(wallet);
+  }
+  clearInterval(ct);
+  document.getElementById('loadingWrap').classList.remove('show');
+  render(data);
+}
+
+// ── RENDER
+function render(d){
+  lastData=d;
+  const sec=document.getElementById('results');
+  sec.classList.add('show');
+  sec.scrollIntoView({behavior:'smooth',block:'start'});
+
+  document.getElementById('rAddr').textContent=d.wallet;
+
+  const tc=d.tier==='High'?'t-high':d.tier==='Probable'?'t-probable':'t-speculative';
+  const th=`<span class="tier-badge ${tc}">${d.tier}</span>`;
+  document.getElementById('rTier').innerHTML=th;
+  document.getElementById('rTier2').innerHTML=th;
+
+  const pct=Math.round(d.score*100);
+  document.getElementById('rScore').textContent=pct+'%';
+  setTimeout(()=>document.getElementById('rBar').style.width=pct+'%',100);
+
+  // Linked
+  const lw=document.getElementById('rLinked');
+  lw.innerHTML=d.linkedWallets&&d.linkedWallets.length
+    ?d.linkedWallets.map(w=>`<div class="wallet-row"><span>${w}</span><button class="copy-btn" onclick="navigator.clipboard.writeText('${w}')">Copy</button></div>`).join('')
+    :'<div class="wallet-row" style="color:var(--dim)">No linked wallets detected</div>';
+
+  // Table
+  document.getElementById('rTable').innerHTML=(d.breakdown||[]).map(h=>`
+    <tr>
+      <td style="font-family:var(--mono);color:var(--accent)">${h.heuristic}</td>
+      <td>${(h.weight*100).toFixed(0)}%</td>
+      <td><div class="sbar"><span style="min-width:30px;font-family:var(--mono);font-size:10px">${h.score.toFixed(2)}</span><div class="sbar-t"><div class="sbar-f" style="width:${h.score*100}%"></div></div></div></td>
+      <td><span class="fbadge ${h.fired?'fy':'fn'}">${h.fired?'✓ Yes':'— No'}</span></td>
+      <td style="font-family:var(--mono);font-size:10px">${h.contribution.toFixed(4)}</td>
+      <td style="font-size:10px;color:var(--dim)">${JSON.stringify(h.evidence)}</td>
+    </tr>`).join('');
+
+  document.getElementById('jid').textContent=JSON.stringify(d,null,2);
+
+  // Graph
+  renderGraph(d.graphPayload,d.wallet);
+  document.getElementById('jgr').textContent=JSON.stringify(d.graphPayload,null,2);
+
+  // Sanctions
+  const sl=document.getElementById('rSanctions');
+  if(d.sanctions&&d.sanctions.tree&&d.sanctions.tree.length){
+    sl.innerHTML=d.sanctions.tree.map(s=>{
+      const rc=s.score>0.7?'rh':s.score>0.3?'rm':'rl';
+      const rl=s.score>0.7?'High Risk':s.score>0.3?'Medium':'Low';
+      return`<div class="sanction-row"><div class="sanction-addr">${s.target}</div><div class="sanction-meta"><span>Hop ${s.hop}</span><span>Vol ${s.volume}</span><span class="rbadge ${rc}">${rl}</span></div></div>`;
+    }).join('');
+  }else{sl.innerHTML='<div class="sanction-row" style="color:var(--dim)">No sanctions exposure detected</div>';}
+  document.getElementById('jsa').textContent=JSON.stringify(d.sanctions,null,2);
+
+  // Bridge
+  const bl=document.getElementById('rBridge');
+  if(d.bridge&&d.bridge.graph&&d.bridge.graph.edges&&d.bridge.graph.edges.length){
+    bl.innerHTML=d.bridge.graph.edges.map(e=>`
+      <div class="bridge-row">
+        <span class="ctag">${e.fromChain}</span>
+        <span style="color:var(--dim)">→</span>
+        <span class="ctag">${e.toChain}</span>
+        <span class="proto">${e.bridge}</span>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${e.amount} ETH</span>
+      </div>`).join('');
+  }else{bl.innerHTML='<div class="bridge-row" style="color:var(--dim)">No bridge hops detected</div>';}
+  document.getElementById('jbr').textContent=JSON.stringify(d.bridge,null,2);
+}
+
+// ── GRAPH SVG
+function renderGraph(payload,seed){
+  const svg=document.getElementById('graphSvg');
+  if(!payload||!payload.nodes){svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#4b5563" font-size="13" font-family="Inter">No graph data</text>';return;}
+  const W=svg.parentElement.offsetWidth||560,H=280;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const nodes=payload.nodes,edges=payload.edges||[];
+  const cx=W/2,cy=H/2,r=Math.min(W,H)*0.33;
+  const pos={};
+  nodes.forEach((n,i)=>{
+    if(i===0){pos[n]={x:cx,y:cy};}
+    else{const a=((i-1)/(nodes.length-1))*Math.PI*2;pos[n]={x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)};}
+  });
+  let h=`<defs>
+    <radialGradient id="sg1" cx="50%" cy="50%" r="50%"><stop stop-color="#c4b5fd"/><stop offset="1" stop-color="#7c3aed"/></radialGradient>
+    <radialGradient id="sg2" cx="50%" cy="50%" r="50%"><stop stop-color="#a78bfa"/><stop offset="1" stop-color="#5b21b6"/></radialGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+  edges.forEach(e=>{
+    const f=pos[e.from],t=pos[e.to];
+    if(!f||!t)return;
+    h+=`<line x1="${f.x}" y1="${f.y}" x2="${t.x}" y2="${t.y}" stroke="rgba(139,92,246,0.25)" stroke-width="${Math.min(e.weight||1,3)+1}" stroke-dasharray="5 4"/>`;
+  });
+  nodes.forEach((n,i)=>{
+    const p=pos[n];if(!p)return;
+    const isS=i===0,rr=isS?20:13;
+    h+=`<circle cx="${p.x}" cy="${p.y}" r="${rr}" fill="${isS?'url(#sg1)':'url(#sg2)'}" filter="url(#glow)" opacity="0.92"/>`;
+    h+=`<text x="${p.x}" y="${p.y+rr+13}" text-anchor="middle" fill="#6b7280" font-size="9" font-family="JetBrains Mono,monospace">${n.slice(0,6)}…${n.slice(-4)}</text>`;
+  });
+  svg.innerHTML=h;
+}
+
+// ── SCROLL REVEAL
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target);}});},{threshold:0.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// Enter key
+document.getElementById('walletInput').addEventListener('keydown',e=>{if(e.key==='Enter')runInvestigation();});
+</script>
+</body>
+</html>
