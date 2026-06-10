@@ -1,4 +1,21 @@
 // tests/rpc/provider.test.js
+// ethers v6's JsonRpcProvider doesn't expose the configured chainId until a
+// real network call is made (the network is lazy-fetched). To verify the
+// (url, network) args the provider is constructed with, we spy on the
+// ethers.JsonRpcProvider constructor and capture each call.
+const ethers = require('ethers');
+const constructorCalls = [];
+// Capture the original class BEFORE installing the spy, so we can both
+// build real instances from the mock implementation AND use the class for
+// `instanceof` checks.
+const JsonRpcProvider = ethers.JsonRpcProvider;
+const spy = jest.spyOn(ethers, 'JsonRpcProvider').mockImplementation(
+  function MockedJsonRpcProvider(url, network) {
+    constructorCalls.push({ url, network });
+    return new JsonRpcProvider(url, network);
+  },
+);
+
 const {
   getProvider,
   listConfiguredChains,
@@ -6,7 +23,6 @@ const {
 } = require('../../src/rpc/provider');
 const { InvalidAddressError } = require('../../src/utils/errors');
 const { SUPPORTED_CHAINS, CHAINS } = require('../../src/config/chains');
-const { JsonRpcProvider } = require('ethers');
 
 // Per-test env with a placeholder URL for every supported chain. Each test
 // picks the subset it needs.
@@ -22,6 +38,11 @@ const FULL_ENV = {
 
 beforeEach(() => {
   clearProviderCache();
+  constructorCalls.length = 0;
+});
+
+afterAll(() => {
+  spy.mockRestore();
 });
 
 describe('rpc/provider — getProvider()', () => {
@@ -94,15 +115,20 @@ describe('rpc/provider — getProvider()', () => {
     });
 
     test('the returned provider is configured with the correct chainId and name', () => {
-      // JsonRpcProvider stores the network config internally; we can introspect
-      // it via the `_network` / `network` properties (stable across ethers v6
-      // minor versions for our purposes).
+      // We assert against the captured constructor args (the constructor spy
+      // at the top of this file records every (url, network) pair).
+      // For each chain, the call should have used the chain's envKey URL
+      // and the chain's {chainId, name} from src/config/chains.js.
       for (const chain of SUPPORTED_CHAINS) {
-        const p = getProvider(chain, { env: FULL_ENV });
-        // The network object holds the chainId/name we passed at construction.
-        const net = p._network || p.network;
-        expect(Number(net.chainId)).toBe(CHAINS[chain].chainId);
-        expect(net.name).toBe(CHAINS[chain].name);
+        // Bust the cache so a fresh provider (and fresh constructor call) happens.
+        clearProviderCache();
+        constructorCalls.length = 0;
+        getProvider(chain, { env: FULL_ENV });
+        expect(constructorCalls.length).toBe(1);
+        const { url, network } = constructorCalls[0];
+        expect(url).toBe(FULL_ENV[CHAINS[chain].envKey]);
+        expect(Number(network.chainId)).toBe(CHAINS[chain].chainId);
+        expect(network.name).toBe(CHAINS[chain].name);
       }
     });
 

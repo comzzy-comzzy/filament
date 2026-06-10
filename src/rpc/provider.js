@@ -34,11 +34,15 @@ function clearProviderCache() {
 }
 
 function listConfiguredChains({ env = process.env } = {}) {
-  // Return only chains that have a usable RPC URL configured.
+  // Return only chains that have a usable RPC URL configured. "Usable"
+  // matches the same definition as getProvider: non-empty after trim.
   const configured = [];
   for (const name of require('../config/chains').SUPPORTED_CHAINS) {
     const chain = getChain(name);
-    if (env[chain.envKey]) configured.push(name);
+    const url = env[chain.envKey];
+    if (typeof url === 'string' && url.trim() !== '') {
+      configured.push(name);
+    }
   }
   return configured;
 }
