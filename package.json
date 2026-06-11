@@ -9,6 +9,8 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "start:sse": "MCP_TRANSPORT=sse node src/server.js",
+    "start:stdio": "node src/server.js",
     "test": "jest",
     "example:basic": "node examples/agent-workflow-basic.js",
     "example:trace": "node examples/agent-workflow-deep-trace.js",
@@ -16,8 +18,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "ethers": "^6.13.0"
+    "ethers": "^6.13.0",
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "jest": "^29.7.0"
