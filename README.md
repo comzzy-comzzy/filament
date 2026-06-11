@@ -5,6 +5,67 @@ links EVM wallets across seven chains using pure onchain behavioral
 heuristics. No offchain data. No CEX info. No social profiles. Pure
 cryptographic and behavioral inference only.
 
+## 🚀 Hosted Public Instance (try it in 30 seconds)
+
+A public SSE endpoint is live — no install, no RPC keys, no `.env`:
+
+**SSE URL:** `https://filament-production-84b7.up.railway.app/sse`
+
+Drop this into any MCP-compatible client (Claude Desktop, Cursor, etc.):
+
+```json
+{
+  "mcpServers": {
+    "filament": {
+      "url": "https://filament-production-84b7.up.railway.app/sse"
+    }
+  }
+}
+```
+
+> ⚠️ This is a shared instance. Be polite — no tight loops, no bulk
+> cluster sweeps. For heavy / production use, run your own (see
+> [Running the Server](#running-the-server) below).
+
+### Quick health check
+
+```bash
+# 1. Confirm the server is reachable
+curl https://filament-production-84b7.up.railway.app/health
+# → {"status":"ok","transport":["stdio","sse"],"tools":11}
+
+# 2. Open the SSE stream (Ctrl-C to close)
+curl -N https://filament-production-84b7.up.railway.app/sse
+# → event: endpoint
+#   data: /messages?sessionId=...
+```
+
+Once you have a `sessionId`, you can POST MCP JSON-RPC messages to:
+
+```
+POST https://filament-production-84b7.up.railway.app/messages?sessionId=<sessionId>
+Content-Type: application/json
+```
+
+### How it works (SSE flow)
+
+```
+┌──────────┐  GET /sse                ┌────────────────────┐
+│   MCP    │ ───────────────────────► │  Filament server   │
+│  client  │ ◄─────────────────────── │  (Railway)         │
+│          │   event: endpoint        │                    │
+│          │   data: /messages?…      │  streams tool      │
+│          │                          │  responses back     │
+│          │  POST /messages?…        │  on the same SSE   │
+│          │ ───────────────────────► │  connection         │
+└──────────┘                          └────────────────────┘
+```
+
+1. Client opens `GET /sse` → server returns a `sessionId` and starts streaming.
+2. Client sends JSON-RPC requests to `POST /messages?sessionId=<id>`.
+3. Server replies asynchronously on the open SSE stream as
+   `event: message` frames.
+
 ## Problem
 
 Operators of meaningful onchain capital rarely keep all their assets behind
@@ -34,7 +95,8 @@ scoring, sanctions exposure mapping, and an aggregate confidence report.
 ```
 +----------+      +-----------+      +-------------+
 |  Agent   | <--> |  MCP /    | <--> |  Heuristics |
-| (LLM)    |      |  stdio    |      |  (9 modules)|
+| (LLM)    |      |  stdio /  |      |  (9 modules)|
+|          |      |  SSE      |      |             |
 +----------+      +-----------+      +-------------+
                         |
                         v
@@ -58,7 +120,9 @@ scoring, sanctions exposure mapping, and an aggregate confidence report.
 ```
 
 - `src/server.js` registers the eleven tool adapters and connects over
-  stdio using the official MCP SDK.
+  either transport. **stdio** is the default (no env var needed);
+  **SSE** is enabled with `MCP_TRANSPORT=sse` and serves on `PORT`
+  (default `3008`) with `GET /sse`, `POST /messages`, and `GET /health`.
 - `src/rpc/provider.js` resolves per-chain `JsonRpcProvider`s from
   environment variables. Missing URLs are tolerated — the chain is just
   skipped.
@@ -263,16 +327,29 @@ RPC_BNB=https://...
 RATE_LIMIT_MS=200
 MAX_GRAPH_DEPTH=3
 CACHE_TTL_SECONDS=300
+MCP_TRANSPORT=sse   # "stdio" (default) or "sse"
+PORT=3008           # only used in SSE mode
 ```
 
 All `RPC_*` entries are optional; missing URLs cause the chain to be
 skipped, not the server to crash. The three numeric variables control
-the rate-limit interval, BFS hop cap, and in-memory cache TTL.
+the rate-limit interval, BFS hop cap, and in-memory cache TTL. The two
+transport variables select stdio vs. SSE and the HTTP port.
 
 ## Running the Server
 
+Filament supports two transports, selected by the `MCP_TRANSPORT` env
+var. **stdio is the default** — no config required.
+
+| Mode     | Command               | Endpoint                                                        | Use case                       |
+| -------- | --------------------- | --------------------------------------------------------------- | ------------------------------ |
+| `stdio`  | `npm start`           | local child process                                             | Local agent, Cursor, IDE       |
+| `sse`    | `npm run start:sse`   | `http://localhost:3008/sse` (override with `PORT=...`)          | Remote / hosted / browser use  |
+
+### Option A — stdio (local child process)
+
 ```bash
-npm start
+npm start                  # or: npm run start:stdio
 ```
 
 Filament speaks MCP over stdio, so any MCP-compatible client can connect
@@ -288,6 +365,97 @@ to it directly:
   }
 }
 ```
+
+### Option B — SSE (HTTP, local)
+
+```bash
+npm run start:sse          # MCP_TRANSPORT=sse PORT=3008 node src/server.js
+```
+
+This starts an Express server on `PORT` (default `3008`) exposing:
+
+| Method | Path                         | Purpose                                     |
+| ------ | ---------------------------- | ------------------------------------------- |
+| `GET`  | `/sse`                       | Open an MCP SSE session (returns sessionId) |
+| `POST` | `/messages?sessionId=…`      | Send a JSON-RPC message to that session     |
+| `GET`  | `/health`                    | Liveness + tool count                       |
+| `*`    | `*`                          | CORS is enabled on every endpoint           |
+
+On startup the server logs:
+
+```
+Filament MCP server running on http://localhost:3008/sse
+```
+
+**Connect from an MCP client:**
+
+```json
+{
+  "mcpServers": {
+    "filament": {
+      "url": "http://localhost:3008/sse"
+    }
+  }
+}
+```
+
+Some clients (older Claude Desktop builds, MCP Inspector, etc.) accept
+an explicit `type` hint:
+
+```json
+{
+  "mcpServers": {
+    "filament": {
+      "type": "sse",
+      "url": "http://localhost:3008/sse"
+    }
+  }
+}
+```
+
+**Smoke-test the endpoints manually:**
+
+```bash
+# 1. Liveness
+curl http://localhost:3008/health
+# → {"status":"ok","transport":["stdio","sse"],"tools":11}
+
+# 2. Open the SSE stream and grab the sessionId from the `endpoint` event
+curl -N http://localhost:3008/sse
+# → event: endpoint
+#   data: /messages?sessionId=8e0c...
+```
+
+### Option C — Use the hosted public instance
+
+Skip the install entirely and point any MCP client at:
+
+```
+https://filament-production-84b7.up.railway.app/sse
+```
+
+```json
+{
+  "mcpServers": {
+    "filament": {
+      "url": "https://filament-production-84b7.up.railway.app/sse"
+    }
+  }
+}
+```
+
+This is the same server, hosted on Railway, with the operator's own
+RPC URLs already wired in. Be polite — it's a shared instance.
+
+### Notes for deployers
+
+- `MCP_TRANSPORT=sse` switches the server to HTTP mode. Anything else
+  (or unset) keeps stdio mode active.
+- `PORT` is only consumed in SSE mode and defaults to `3008`.
+- `npm start` and `npm run start:stdio` are aliases for the same
+  stdio command — pick whichever fits your tooling.
+- CORS is wide-open (`*`) on every route. Tighten it for production
+  by replacing the bare `app.use(cors())` call in `src/server.js`.
 
 ## Running Agent Workflows
 
