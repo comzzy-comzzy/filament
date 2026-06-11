@@ -33,7 +33,7 @@ const { listConfiguredChains } = require('./rpc/provider');
 const RATE_LIMIT_MS = Number(process.env.RATE_LIMIT_MS || 200);
 const MAX_GRAPH_DEPTH = Number(process.env.MAX_GRAPH_DEPTH || 3);
 const CACHE_TTL_SECONDS = Number(process.env.CACHE_TTL_SECONDS || 300);
-const PORT = Number(process.env.PORT || 3008);
+const PORT = Number(process.env.PORT || 3000);
 const MCP_TRANSPORT = (process.env.MCP_TRANSPORT || 'stdio').toLowerCase();
 
 const cache = new TtlCache({ ttlSeconds: CACHE_TTL_SECONDS });
