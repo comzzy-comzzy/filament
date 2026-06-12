@@ -122,7 +122,7 @@ scoring, sanctions exposure mapping, and an aggregate confidence report.
 - `src/server.js` registers the eleven tool adapters and connects over
   either transport. **stdio** is the default (no env var needed);
   **SSE** is enabled with `MCP_TRANSPORT=sse` and serves on `PORT`
-  (default `3008`) with `GET /sse`, `POST /messages`, and `GET /health`.
+  (default `3000`) with `GET /sse`, `POST /messages`, and `GET /health`.
 - `src/rpc/provider.js` resolves per-chain `JsonRpcProvider`s from
   environment variables. Missing URLs are tolerated — the chain is just
   skipped.
@@ -328,7 +328,7 @@ RATE_LIMIT_MS=200
 MAX_GRAPH_DEPTH=3
 CACHE_TTL_SECONDS=300
 MCP_TRANSPORT=sse   # "stdio" (default) or "sse"
-PORT=3008           # only used in SSE mode
+PORT=3000           # only used in SSE mode
 ```
 
 All `RPC_*` entries are optional; missing URLs cause the chain to be
@@ -344,7 +344,7 @@ var. **stdio is the default** — no config required.
 | Mode     | Command               | Endpoint                                                        | Use case                       |
 | -------- | --------------------- | --------------------------------------------------------------- | ------------------------------ |
 | `stdio`  | `npm start`           | local child process                                             | Local agent, Cursor, IDE       |
-| `sse`    | `npm run start:sse`   | `http://localhost:3008/sse` (override with `PORT=...`)          | Remote / hosted / browser use  |
+| `sse`    | `npm run start:sse`   | `http://localhost:3000/sse` (override with `PORT=...`)          | Remote / hosted / browser use  |
 
 ### Option A — stdio (local child process)
 
@@ -369,10 +369,10 @@ to it directly:
 ### Option B — SSE (HTTP, local)
 
 ```bash
-npm run start:sse          # MCP_TRANSPORT=sse PORT=3008 node src/server.js
+npm run start:sse          # MCP_TRANSPORT=sse PORT=3000 node src/server.js
 ```
 
-This starts an Express server on `PORT` (default `3008`) exposing:
+This starts an Express server on `PORT` (default `3000`) exposing:
 
 | Method | Path                         | Purpose                                     |
 | ------ | ---------------------------- | ------------------------------------------- |
@@ -384,7 +384,7 @@ This starts an Express server on `PORT` (default `3008`) exposing:
 On startup the server logs:
 
 ```
-Filament MCP server running on http://localhost:3008/sse
+Filament MCP server running on http://localhost:3000/sse
 ```
 
 **Connect from an MCP client:**
@@ -393,7 +393,7 @@ Filament MCP server running on http://localhost:3008/sse
 {
   "mcpServers": {
     "filament": {
-      "url": "http://localhost:3008/sse"
+      "url": "http://localhost:3000/sse"
     }
   }
 }
@@ -407,7 +407,7 @@ an explicit `type` hint:
   "mcpServers": {
     "filament": {
       "type": "sse",
-      "url": "http://localhost:3008/sse"
+      "url": "http://localhost:3000/sse"
     }
   }
 }
@@ -417,11 +417,11 @@ an explicit `type` hint:
 
 ```bash
 # 1. Liveness
-curl http://localhost:3008/health
+curl http://localhost:3000/health
 # → {"status":"ok","transport":["stdio","sse"],"tools":11}
 
 # 2. Open the SSE stream and grab the sessionId from the `endpoint` event
-curl -N http://localhost:3008/sse
+curl -N http://localhost:3000/sse
 # → event: endpoint
 #   data: /messages?sessionId=8e0c...
 ```
@@ -451,7 +451,7 @@ RPC URLs already wired in. Be polite — it's a shared instance.
 
 - `MCP_TRANSPORT=sse` switches the server to HTTP mode. Anything else
   (or unset) keeps stdio mode active.
-- `PORT` is only consumed in SSE mode and defaults to `3008`.
+- `PORT` is only consumed in SSE mode and defaults to `3000`.
 - `npm start` and `npm run start:stdio` are aliases for the same
   stdio command — pick whichever fits your tooling.
 - CORS is wide-open (`*`) on every route. Tighten it for production
