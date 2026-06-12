@@ -1,9 +1,15 @@
 // src/tools/bridgeHopTracer.js
 // Tool 4: bridge_hop_tracer — directed graph of cross-chain fund flows.
+//
+// Resolution order:
+//   1. ctx.bridgeEdges[wallet]  — override
+//   2. live fetch via fetchBridgeInteractions per chain
+//   3. NO_DATA (no provider, no override)
 
 const { validateAddress } = require('../utils/checksum');
 const { SchemaError } = require('../utils/errors');
 const tracer = require('../heuristics/bridgeHopTracer');
+const fetchers = require('../rpc/fetchers');
 
 const inputSchema = {
   type: 'object',
@@ -24,7 +30,26 @@ function validate(input) {
 
 async function handler(input, ctx = {}) {
   const params = validate(input);
-  const edges = (ctx.bridgeEdges && ctx.bridgeEdges[params.wallet]) || [];
+  let edges = (ctx.bridgeEdges && ctx.bridgeEdges[params.wallet]) || [];
+
+  if (edges.length === 0 && ctx.getProvider) {
+    const liveEdges = [];
+    const chains = (ctx.configuredChains && ctx.configuredChains.length > 0)
+      ? ctx.configuredChains
+      : ['ethereum', 'arbitrum', 'optimism', 'base', 'polygon', 'bnb', 'mantle'];
+    for (const chain of chains) {
+      const provider = ctx.getProvider(chain);
+      if (!provider) continue;
+      try {
+        const bridgeHits = await fetchers.fetchBridgeInteractions(ctx, chain, params.wallet);
+        liveEdges.push(...bridgeHits);
+      } catch (_) {
+        // continue
+      }
+    }
+    edges = liveEdges;
+  }
+
   const result = await tracer.run({ edges }, ctx);
   const nodes = new Set();
   for (const e of edges) {
