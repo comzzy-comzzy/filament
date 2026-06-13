@@ -25,12 +25,6 @@ Streamable HTTP servers:
 }
 ```
 
-Legacy SSE clients can still use:
-
-```
-https://filament-production-84b7.up.railway.app/sse
-```
-
 > ⚠️ This is a shared instance. Be polite — no tight loops, no bulk
 > cluster sweeps. For heavy / production use, run your own (see
 > [Running the Server](#running-the-server) below).
@@ -47,38 +41,21 @@ curl -sS -X POST https://filament-production-84b7.up.railway.app/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
-
-# 3. Legacy SSE clients can open the SSE stream (Ctrl-C to close)
-curl -N https://filament-production-84b7.up.railway.app/sse
-# → event: endpoint
-#   data: /messages?sessionId=...
 ```
 
-Once you have a `sessionId`, you can POST MCP JSON-RPC messages to:
+### Legacy SSE compatibility
+
+`/sse` is retained only for older MCP clients that do not support
+Streamable HTTP. Do not use it for Claude's remote connector.
+
+Legacy endpoint:
 
 ```
-POST https://filament-production-84b7.up.railway.app/messages?sessionId=<sessionId>
-Content-Type: application/json
+https://filament-production-84b7.up.railway.app/sse
 ```
 
-### How it works (SSE flow)
-
-```
-┌──────────┐  GET /sse                ┌────────────────────┐
-│   MCP    │ ───────────────────────► │  Filament server   │
-│  client  │ ◄─────────────────────── │  (Railway)         │
-│          │   event: endpoint        │                    │
-│          │   data: /messages?…      │  streams tool      │
-│          │                          │  responses back     │
-│          │  POST /messages?…        │  on the same SSE   │
-│          │ ───────────────────────► │  connection         │
-└──────────┘                          └────────────────────┘
-```
-
-1. Client opens `GET /sse` → server returns a `sessionId` and starts streaming.
-2. Client sends JSON-RPC requests to `POST /messages?sessionId=<id>`.
-3. Server replies asynchronously on the open SSE stream as
-   `event: message` frames.
+SSE clients open `GET /sse`, receive a `sessionId`, then send JSON-RPC
+to `POST /messages?sessionId=<id>`.
 
 ## Problem
 
