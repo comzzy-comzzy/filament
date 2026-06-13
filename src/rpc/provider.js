@@ -3,11 +3,12 @@
 // corresponding `RPC_*` environment variable. Missing URLs are tolerated:
 // `getProvider` returns `null` so callers can skip the chain gracefully.
 
-const { JsonRpcProvider } = require('ethers');
+const { FetchRequest, JsonRpcProvider } = require('ethers');
 const { isSupportedChain, getChain } = require('../config/chains');
 const { InvalidAddressError } = require('../utils/errors');
 
 const providerCache = new Map();
+const RPC_TIMEOUT_MS = Number(process.env.RPC_TIMEOUT_MS || 10_000);
 
 function getProvider(chainName, { env = process.env, force = false } = {}) {
   if (!isSupportedChain(chainName)) {
@@ -21,10 +22,13 @@ function getProvider(chainName, { env = process.env, force = false } = {}) {
   if (!url || typeof url !== 'string' || url.trim() === '') {
     return null;
   }
-  const provider = new JsonRpcProvider(url, {
+  const request = new FetchRequest(url.trim());
+  request.timeout = RPC_TIMEOUT_MS;
+  const network = {
     chainId: chain.chainId,
     name: chain.name,
-  });
+  };
+  const provider = new JsonRpcProvider(request, network, { staticNetwork: true });
   providerCache.set(chainName, provider);
   return provider;
 }

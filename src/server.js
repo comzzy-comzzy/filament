@@ -7,7 +7,7 @@
 //   3. Register the eleven tool adapters with the MCP SDK.
 //   4. Connect to the selected transport and run:
 //        - stdio (default) when MCP_TRANSPORT is not "sse"
-//        - SSE     when MCP_TRANSPORT=sse (Express on PORT, /sse + /messages + /health)
+//        - HTTP    when MCP_TRANSPORT=sse (Express on PORT, /mcp + /sse + /messages + /health)
 
 'use strict';
 
@@ -16,6 +16,7 @@ require('dotenv').config();
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { SSEServerTransport } = require('@modelcontextprotocol/sdk/server/sse.js');
+const { StreamableHTTPServerTransport } = require('@modelcontextprotocol/sdk/server/streamableHttp.js');
 const {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -118,6 +119,34 @@ async function runSse() {
   app.use(cors());
   app.use(express.json({ limit: '4mb' }));
 
+  // Modern remote MCP clients use Streamable HTTP. Keep this endpoint
+  // stateless so Railway can serve any request without sticky sessions.
+  app.all('/mcp', async (req, res) => {
+    if (req.method === 'GET') {
+      res
+        .status(405)
+        .set('Allow', 'POST, DELETE, OPTIONS')
+        .json({ error: 'standalone SSE is not enabled on /mcp; use POST' });
+      return;
+    }
+
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
+    });
+    const server = buildServer();
+    try {
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (err) {
+      if (!res.headersSent) {
+        res.status(500).json({ error: err && err.message ? err.message : 'internal error' });
+      }
+    } finally {
+      await server.close().catch(() => undefined);
+    }
+  });
+
   // Map of sessionId -> SSEServerTransport so we can route inbound
   // POST /messages?sessionId=... to the right SSE stream.
   const transports = new Map();
@@ -125,8 +154,13 @@ async function runSse() {
   app.get('/health', (_req, res) => {
     res.json({
       status: 'ok',
-      transport: ['stdio', 'sse'],
+      transport: ['stdio', 'streamable-http', 'sse'],
       tools: 11,
+      endpoints: {
+        mcp: '/mcp',
+        sse: '/sse',
+        messages: '/messages',
+      },
     });
   });
 
@@ -177,7 +211,8 @@ async function runSse() {
   });
 
   // eslint-disable-next-line no-console
-  console.log(`Filament MCP server running on http://localhost:${PORT}/sse`);
+  console.log(`Filament MCP server running on http://localhost:${PORT}/mcp`);
+  console.log(`Legacy SSE endpoint available at http://localhost:${PORT}/sse`);
 }
 
 async function main() {

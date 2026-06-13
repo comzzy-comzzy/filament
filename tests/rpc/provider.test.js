@@ -10,9 +10,9 @@ const constructorCalls = [];
 // `instanceof` checks.
 const JsonRpcProvider = ethers.JsonRpcProvider;
 const spy = jest.spyOn(ethers, 'JsonRpcProvider').mockImplementation(
-  function MockedJsonRpcProvider(url, network) {
-    constructorCalls.push({ url, network });
-    return new JsonRpcProvider(url, network);
+  function MockedJsonRpcProvider(url, network, options) {
+    constructorCalls.push({ url, network, options });
+    return new JsonRpcProvider(url, network, options);
   },
 );
 
@@ -125,10 +125,12 @@ describe('rpc/provider — getProvider()', () => {
         constructorCalls.length = 0;
         getProvider(chain, { env: FULL_ENV });
         expect(constructorCalls.length).toBe(1);
-        const { url, network } = constructorCalls[0];
-        expect(url).toBe(FULL_ENV[CHAINS[chain].envKey]);
+        const { url, network, options } = constructorCalls[0];
+        expect(url.url).toBe(FULL_ENV[CHAINS[chain].envKey]);
+        expect(url.timeout).toBe(10000);
         expect(Number(network.chainId)).toBe(CHAINS[chain].chainId);
         expect(network.name).toBe(CHAINS[chain].name);
+        expect(options).toEqual({ staticNetwork: true });
       }
     });
 
@@ -141,6 +143,12 @@ describe('rpc/provider — getProvider()', () => {
         (p.connection && p.connection.url) ||
         (p._connection && p._connection.url);
       expect(url).toBe(FULL_ENV.RPC_ARBITRUM);
+    });
+
+    test('trims env URLs before constructing the FetchRequest', () => {
+      clearProviderCache();
+      getProvider('ethereum', { env: { RPC_ETHEREUM: '  https://example.invalid/trimmed  ' } });
+      expect(constructorCalls[0].url.url).toBe('https://example.invalid/trimmed');
     });
   });
 

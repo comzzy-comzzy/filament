@@ -12,7 +12,9 @@
 //     to keep latency predictable and RPC credit use bounded.
 //
 // History depth:
-//   The default is the last 1,000,000 blocks (~5–6 months on Ethereum).
+//   The default is the last 50,000 blocks. This keeps hosted MCP tool calls
+//   responsive for Claude-style request windows; override with HISTORY_BLOCKS
+//   when running a dedicated deep-scan instance.
 //   Override with the HISTORY_BLOCKS env var. Set to 0 to scan from
 //   genesis (slow, heavy on rate-limit budget — only use for power users).
 
@@ -114,21 +116,21 @@ const KNOWN_TOKENS = Object.freeze({
 
 
 const DEFAULT_OPTS = Object.freeze({
-  historyBlocks: Number(process.env.HISTORY_BLOCKS || 1_000_000),
+  historyBlocks: Number(process.env.HISTORY_BLOCKS || 50_000),
   // Most public RPCs cap getLogs at 5k–10k blocks per call; some
-  // (publicnode, LlamaRPC) cap at 50k. We default to 10k to stay
-  // well under the universal floor.
-  maxLogBlockRange: Number(process.env.MAX_LOG_BLOCK_RANGE || 10_000),
+  // (publicnode, LlamaRPC) cap at 50k. We default to 50k so the hosted
+  // connector usually does one request per token/direction.
+  maxLogBlockRange: Number(process.env.MAX_LOG_BLOCK_RANGE || 50_000),
   // Per-chain cap on logs to keep memory + heuristic runtime bounded.
-  maxLogsPerChain: Number(process.env.MAX_LOGS_PER_CHAIN || 5_000),
+  maxLogsPerChain: Number(process.env.MAX_LOGS_PER_CHAIN || 500),
   // Distinct edges returned to heuristics.
-  maxEdges: Number(process.env.MAX_EDGES || 2_000),
+  maxEdges: Number(process.env.MAX_EDGES || 250),
   // Distinct contracts returned to contract-overlap heuristic.
-  maxContracts: Number(process.env.MAX_CONTRACTS || 500),
+  maxContracts: Number(process.env.MAX_CONTRACTS || 100),
   // Cap distinct blocks we hydrate timestamps for.
-  maxBlockLookups: Number(process.env.MAX_BLOCK_LOOKUPS || 200),
+  maxBlockLookups: Number(process.env.MAX_BLOCK_LOOKUPS || 25),
   // Gas samples to fetch.
-  maxGasSamples: Number(process.env.MAX_GAS_SAMPLES || 25),
+  maxGasSamples: Number(process.env.MAX_GAS_SAMPLES || 5),
   // Cache TTL for fetcher results.
   cacheTtlSeconds: Number(process.env.FETCHER_CACHE_TTL || 300),
 });
