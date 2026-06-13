@@ -26,6 +26,160 @@ const TOPICS = Object.freeze({
   TRANSFER: '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef',
 });
 
+// Curated high-traffic token contracts per chain. These are the tokens
+// that, in practice, account for >80% of all onchain transfer activity.
+// We MUST provide an `address` filter to getLogs because virtually every
+// public RPC rejects topic-only queries (Cloudflare returns
+// -32046 "Cannot fulfill request", publicnode returns
+// -32701 "specify an address or order a full node"). This is the reason
+// the previous version of this file returned zero signal for every
+// wallet — the call was being rejected before any data was retrieved.
+const KNOWN_TOKENS = Object.freeze({
+  ethereum: [
+    { address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', symbol: 'USDC' },
+    { address: '0xdac17f958d2ee523a2206206994597c13d831ec7', symbol: 'USDT' },
+    { address: '0x6b175474e89094c44da98b954eedeac495271d0f', symbol: 'DAI' },
+    { address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', symbol: 'WETH' },
+    { address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', symbol: 'WBTC' },
+    { address: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84', symbol: 'stETH' },
+    { address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0', symbol: 'MATIC' },
+    { address: '0x514910771af9ca656af840dff83e8264ecf986ca', symbol: 'LINK' },
+    { address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', symbol: 'UNI' },
+    { address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', symbol: 'SHIB' },
+    { address: '0x4e15361fd6b4bb609fa63c81a2be19d873717870', symbol: 'FCT' },
+    { address: '0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202', symbol: 'KNCL' },
+  ],
+  arbitrum: [
+    { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC' },
+    { address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', symbol: 'USDT' },
+    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
+    { address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1', symbol: 'WETH' },
+    { address: '0x2f2a2543b76a4166549f7aa3142ef1142518080d', symbol: 'WBTC' },
+    { address: '0x912ce59144191c1204e64559fe8253a0e49e6548', symbol: 'ARB' },
+    { address: '0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a', symbol: 'GMX' },
+    { address: '0x539bde0d7dbd336b79148aa742883198bbf60342', symbol: 'MAGIC' },
+    { address: '0x1622bf67e6e5747b32c3cf62239daee622a06b5e', symbol: 'LPT' },
+  ],
+  optimism: [
+    { address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85', symbol: 'USDC' },
+    { address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', symbol: 'USDT' },
+    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
+    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
+    { address: '0x68f180fcce6836688e9084f035309e29bf0a2095', symbol: 'WBTC' },
+    { address: '0x4200000000000000000000000000000000000042', symbol: 'OP' },
+    { address: '0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6', symbol: 'SNX' },
+  ],
+  base: [
+    { address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', symbol: 'USDC' },
+    { address: '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2', symbol: 'USDT' },
+    { address: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', symbol: 'DAI' },
+    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
+    { address: '0x0555e30da8f98308edb960aa94c0db47230d2b9c', symbol: 'WBTC' },
+    { address: '0x940181a94a35a4569e4529a3cdfb74e38fd98631', symbol: 'AERO' },
+  ],
+  polygon: [
+    { address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', symbol: 'USDC' },
+    { address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', symbol: 'USDT' },
+    { address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063', symbol: 'DAI' },
+    { address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270', symbol: 'WMATIC' },
+    { address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619', symbol: 'WETH' },
+    { address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6', symbol: 'WBTC' },
+    { address: '0x0000000000000000000000000000000000001010', symbol: 'MATIC' },
+  ],
+  bnb: [
+    { address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', symbol: 'USDC' },
+    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'USDT' },
+    { address: '0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3', symbol: 'DAI' },
+    { address: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c', symbol: 'WBNB' },
+    { address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8', symbol: 'WETH' },
+    { address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c', symbol: 'WBTC' },
+    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'BUSD' },
+  ],
+  mantle: [
+    { address: '0x09bc4e0d864854c6afb6e9e9aaabf9480059275b', symbol: 'USDC' },
+    { address: '0x201eba5cc46d216ce6dc03f80a0ea35a1d6655ee', symbol: 'USDT' },
+    { address: '0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111', symbol: 'WETH' },
+    { address: '0x78c1b0c331c9a4c9d4bf9e09c83ce1fa48b39e00', symbol: 'WMNT' },
+  ],
+});
+
+// Curated high-traffic token contracts per chain. These are the tokens
+// that, in practice, account for >80% of all onchain transfer activity.
+// We MUST provide an `address` filter to getLogs because virtually every
+// public RPC rejects topic-only queries (Cloudflare returns
+// -32046 "Cannot fulfill request", publicnode returns
+// -32701 "specify an address or order a full node"). This is the reason
+// the previous version of this file returned zero signal for every
+// wallet — the call was being rejected before any data was retrieved.
+const KNOWN_TOKENS = Object.freeze({
+  ethereum: [
+    { address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', symbol: 'USDC' },
+    { address: '0xdac17f958d2ee523a2206206994597c13d831ec7', symbol: 'USDT' },
+    { address: '0x6b175474e89094c44da98b954eedeac495271d0f', symbol: 'DAI' },
+    { address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', symbol: 'WETH' },
+    { address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', symbol: 'WBTC' },
+    { address: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84', symbol: 'stETH' },
+    { address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0', symbol: 'MATIC' },
+    { address: '0x514910771af9ca656af840dff83e8264ecf986ca', symbol: 'LINK' },
+    { address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', symbol: 'UNI' },
+    { address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', symbol: 'SHIB' },
+    { address: '0x4e15361fd6b4bb609fa63c81a2be19d873717870', symbol: 'FCT' },
+    { address: '0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202', symbol: 'KNCL' },
+  ],
+  arbitrum: [
+    { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC' },
+    { address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', symbol: 'USDT' },
+    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
+    { address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1', symbol: 'WETH' },
+    { address: '0x2f2a2543b76a4166549f7aa3142ef1142518080d', symbol: 'WBTC' },
+    { address: '0x912ce59144191c1204e64559fe8253a0e49e6548', symbol: 'ARB' },
+    { address: '0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a', symbol: 'GMX' },
+    { address: '0x539bde0d7dbd336b79148aa742883198bbf60342', symbol: 'MAGIC' },
+    { address: '0x1622bf67e6e5747b32c3cf62239daee622a06b5e', symbol: 'LPT' },
+  ],
+  optimism: [
+    { address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85', symbol: 'USDC' },
+    { address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', symbol: 'USDT' },
+    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
+    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
+    { address: '0x68f180fcce6836688e9084f035309e29bf0a2095', symbol: 'WBTC' },
+    { address: '0x4200000000000000000000000000000000000042', symbol: 'OP' },
+    { address: '0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6', symbol: 'SNX' },
+  ],
+  base: [
+    { address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', symbol: 'USDC' },
+    { address: '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2', symbol: 'USDT' },
+    { address: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', symbol: 'DAI' },
+    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
+    { address: '0x0555e30da8f98308edb960aa94c0db47230d2b9c', symbol: 'WBTC' },
+    { address: '0x940181a94a35a4569e4529a3cdfb74e38fd98631', symbol: 'AERO' },
+  ],
+  polygon: [
+    { address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', symbol: 'USDC' },
+    { address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', symbol: 'USDT' },
+    { address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063', symbol: 'DAI' },
+    { address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270', symbol: 'WMATIC' },
+    { address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619', symbol: 'WETH' },
+    { address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6', symbol: 'WBTC' },
+    { address: '0x0000000000000000000000000000000000001010', symbol: 'MATIC' },
+  ],
+  bnb: [
+    { address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', symbol: 'USDC' },
+    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'USDT' },
+    { address: '0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3', symbol: 'DAI' },
+    { address: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c', symbol: 'WBNB' },
+    { address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8', symbol: 'WETH' },
+    { address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c', symbol: 'WBTC' },
+    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'BUSD' },
+  ],
+  mantle: [
+    { address: '0x09bc4e0d864854c6afb6e9e9aaabf9480059275b', symbol: 'USDC' },
+    { address: '0x201eba5cc46d216ce6dc03f80a0ea35a1d6655ee', symbol: 'USDT' },
+    { address: '0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111', symbol: 'WETH' },
+    { address: '0x78c1b0c331c9a4c9d4bf9e09c83ce1fa48b39e00', symbol: 'WMNT' },
+  ],
+});
+
 const DEFAULT_OPTS = Object.freeze({
   historyBlocks: Number(process.env.HISTORY_BLOCKS || 1_000_000),
   // Most public RPCs cap getLogs at 5k–10k blocks per call.

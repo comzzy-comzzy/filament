@@ -1,9 +1,18 @@
 // src/tools/entropyAddressScorer.js
 // Tool 9: entropy_address_scorer — detect low-entropy derived addresses.
+//
+// Resolution order:
+//   1. input.addresses (explicit list passed by caller)
+//   2. ctx.childAddresses[wallet]  — override
+//   3. live fetch: collect token-contract counterparts from fetchEOAActivity
+//      across the configured chains, treat those as "child" interactions
+//   4. NO_DATA (no provider, no override)
 
 const { validateAddress } = require('../utils/checksum');
 const { SchemaError } = require('../utils/errors');
+const { listChains } = require('../config/chains');
 const entropy = require('../heuristics/entropyScorer');
+const fetchers = require('../rpc/fetchers');
 
 const inputSchema = {
   type: 'object',
@@ -16,6 +25,7 @@ const inputSchema = {
       items: { type: 'string' },
       description: 'Child addresses to score. Defaults to ctx.childAddresses[wallet].',
     },
+    chains: { type: 'array', items: { type: 'string' } },
   },
 };
 
@@ -23,14 +33,37 @@ function validate(input) {
   if (!input || typeof input !== 'object') {
     throw new SchemaError('entropy_address_scorer', 'input must be an object');
   }
-  return { wallet: validateAddress(input.wallet), addresses: input.addresses || null };
+  return {
+    wallet: validateAddress(input.wallet),
+    addresses: input.addresses || null,
+    chains: input.chains || listChains(),
+  };
 }
 
 async function handler(input, ctx = {}) {
   const params = validate(input);
-  const addresses =
-    params.addresses || (ctx.childAddresses && ctx.childAddresses[params.wallet]) || [];
-  const result = await entropy.run({ addresses }, ctx);
+  let addresses = params.addresses || (ctx.childAddresses && ctx.childAddresses[params.wallet]) || [];
+
+  if ((!addresses || addresses.length < 2) && ctx.getProvider) {
+    // Best-effort: pull counterparties from the wallet's EOA activity.
+    const collected = new Set();
+    for (const chain of params.chains) {
+      const provider = ctx.getProvider(chain);
+      if (!provider) continue;
+      try {
+        const activity = await fetchers.fetchEOAActivity(ctx, chain, params.wallet);
+        for (const e of activity.fundingEdges) {
+          if (e.from && e.from !== activity.wallet) collected.add(e.from);
+          if (e.to && e.to !== activity.wallet) collected.add(e.to);
+        }
+      } catch (_) {
+        // continue
+      }
+    }
+    addresses = Array.from(collected);
+  }
+
+  const result = await entropy.run({ addresses: addresses || [] }, ctx);
   const evidence = result.evidence || {};
   const repeated = evidence.repeatedByteAddresses || 0;
   return {
