@@ -111,79 +111,14 @@ const KNOWN_TOKENS = Object.freeze({
 // -32701 "specify an address or order a full node"). This is the reason
 // the previous version of this file returned zero signal for every
 // wallet — the call was being rejected before any data was retrieved.
-const KNOWN_TOKENS = Object.freeze({
-  ethereum: [
-    { address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', symbol: 'USDC' },
-    { address: '0xdac17f958d2ee523a2206206994597c13d831ec7', symbol: 'USDT' },
-    { address: '0x6b175474e89094c44da98b954eedeac495271d0f', symbol: 'DAI' },
-    { address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', symbol: 'WETH' },
-    { address: '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', symbol: 'WBTC' },
-    { address: '0xae7ab96520de3a18e5e111b5eaab095312d7fe84', symbol: 'stETH' },
-    { address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0', symbol: 'MATIC' },
-    { address: '0x514910771af9ca656af840dff83e8264ecf986ca', symbol: 'LINK' },
-    { address: '0x1f9840a85d5af5bf1d1762f925bdaddc4201f984', symbol: 'UNI' },
-    { address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', symbol: 'SHIB' },
-    { address: '0x4e15361fd6b4bb609fa63c81a2be19d873717870', symbol: 'FCT' },
-    { address: '0xdefa4e8a7bcba345f687a2f1456f5edd9ce97202', symbol: 'KNCL' },
-  ],
-  arbitrum: [
-    { address: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831', symbol: 'USDC' },
-    { address: '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9', symbol: 'USDT' },
-    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
-    { address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1', symbol: 'WETH' },
-    { address: '0x2f2a2543b76a4166549f7aa3142ef1142518080d', symbol: 'WBTC' },
-    { address: '0x912ce59144191c1204e64559fe8253a0e49e6548', symbol: 'ARB' },
-    { address: '0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a', symbol: 'GMX' },
-    { address: '0x539bde0d7dbd336b79148aa742883198bbf60342', symbol: 'MAGIC' },
-    { address: '0x1622bf67e6e5747b32c3cf62239daee622a06b5e', symbol: 'LPT' },
-  ],
-  optimism: [
-    { address: '0x0b2c639c533813f4aa9d7837caf62653d097ff85', symbol: 'USDC' },
-    { address: '0x94b008aa00579c1307b0ef2c499ad98a8ce58e58', symbol: 'USDT' },
-    { address: '0xda10009cbd5d07dd0cecc66161fc93d7c9000da1', symbol: 'DAI' },
-    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
-    { address: '0x68f180fcce6836688e9084f035309e29bf0a2095', symbol: 'WBTC' },
-    { address: '0x4200000000000000000000000000000000000042', symbol: 'OP' },
-    { address: '0x350a791bfc2c21f9ed5d10980dad2e2638ffa7f6', symbol: 'SNX' },
-  ],
-  base: [
-    { address: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', symbol: 'USDC' },
-    { address: '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2', symbol: 'USDT' },
-    { address: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb', symbol: 'DAI' },
-    { address: '0x4200000000000000000000000000000000000006', symbol: 'WETH' },
-    { address: '0x0555e30da8f98308edb960aa94c0db47230d2b9c', symbol: 'WBTC' },
-    { address: '0x940181a94a35a4569e4529a3cdfb74e38fd98631', symbol: 'AERO' },
-  ],
-  polygon: [
-    { address: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359', symbol: 'USDC' },
-    { address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f', symbol: 'USDT' },
-    { address: '0x8f3cf7ad23cd3cadbd9735aff958023239c6a063', symbol: 'DAI' },
-    { address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270', symbol: 'WMATIC' },
-    { address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619', symbol: 'WETH' },
-    { address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6', symbol: 'WBTC' },
-    { address: '0x0000000000000000000000000000000000001010', symbol: 'MATIC' },
-  ],
-  bnb: [
-    { address: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', symbol: 'USDC' },
-    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'USDT' },
-    { address: '0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3', symbol: 'DAI' },
-    { address: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c', symbol: 'WBNB' },
-    { address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8', symbol: 'WETH' },
-    { address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c', symbol: 'WBTC' },
-    { address: '0x55d398326f99059ff775485246999027b3197955', symbol: 'BUSD' },
-  ],
-  mantle: [
-    { address: '0x09bc4e0d864854c6afb6e9e9aaabf9480059275b', symbol: 'USDC' },
-    { address: '0x201eba5cc46d216ce6dc03f80a0ea35a1d6655ee', symbol: 'USDT' },
-    { address: '0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111', symbol: 'WETH' },
-    { address: '0x78c1b0c331c9a4c9d4bf9e09c83ce1fa48b39e00', symbol: 'WMNT' },
-  ],
-});
+
 
 const DEFAULT_OPTS = Object.freeze({
   historyBlocks: Number(process.env.HISTORY_BLOCKS || 1_000_000),
-  // Most public RPCs cap getLogs at 5k–10k blocks per call.
-  maxLogBlockRange: Number(process.env.MAX_LOG_BLOCK_RANGE || 100_000),
+  // Most public RPCs cap getLogs at 5k–10k blocks per call; some
+  // (publicnode, LlamaRPC) cap at 50k. We default to 10k to stay
+  // well under the universal floor.
+  maxLogBlockRange: Number(process.env.MAX_LOG_BLOCK_RANGE || 10_000),
   // Per-chain cap on logs to keep memory + heuristic runtime bounded.
   maxLogsPerChain: Number(process.env.MAX_LOGS_PER_CHAIN || 5_000),
   // Distinct edges returned to heuristics.
@@ -262,13 +197,49 @@ async function blockWindow(ctx, chain) {
 // paginatedLogs — slice [from, to] into chunks the RPC will accept,
 // fetch each chunk serially through the rate limiter, concat.
 // Returns the merged log array (capped at maxLogsPerChain).
+//
+// IMPORTANT: many public RPCs (e.g. publicnode) report a `head` block
+// that is *slightly ahead* of the head they will actually accept in
+// `getLogs`. If we pass `toBlock: <cached head>`, we get back
+// -32602 "block range extends beyond current head block". To stay
+// safe, we always end the window 1 block short and fall back to
+// `toBlock: 'latest'` semantics inside the RPC call by passing the
+// literal string.
 async function paginatedLogs(ctx, provider, baseFilter, chain) {
   const { fromBlock, toBlock } = baseFilter;
-  if (fromBlock > toBlock) return [];
+  // Resolve the toBlock to a number; 'latest' is allowed.
+  let toNum;
+  if (toBlock === 'latest' || toBlock === 'pending') {
+    toNum = null;
+  } else if (typeof toBlock === 'string') {
+    toNum = parseInt(toBlock, 16);
+  } else {
+    toNum = toBlock;
+  }
+  let fromNum;
+  if (typeof fromBlock === 'string') {
+    fromNum = parseInt(fromBlock, 16);
+  } else {
+    fromNum = fromBlock;
+  }
+  if (toNum != null && fromNum > toNum) return [];
+  // Probe the live head once; subtract 1 block of headroom to dodge the
+  // "extends beyond current head" race that breaks public RPCs.
+  let liveHead = null;
+  try {
+    liveHead = await rateLimitCall(ctx, () => provider.getBlockNumber(), chain);
+  } catch (_) {
+    liveHead = null;
+  }
+  if (liveHead != null) {
+    if (toNum == null || toNum > liveHead) toNum = liveHead - 1;
+  }
+  if (toNum != null && toNum < fromNum) return [];
+
   const step = Math.max(1, DEFAULT_OPTS.maxLogBlockRange);
   const out = [];
-  for (let start = fromBlock; start <= toBlock; start += step) {
-    const end = Math.min(toBlock, start + step - 1);
+  for (let start = fromNum; start <= toNum; start += step) {
+    const end = Math.min(toNum, start + step - 1);
     const filter = { ...baseFilter, fromBlock: start, toBlock: end };
     let chunk = [];
     try {
@@ -330,7 +301,159 @@ async function fetchTimestamps(ctx, chain, blockNumbers) {
 
 // ---------------------------------------------------------------------------
 // 1. EOA activity: ERC20 Transfer events touching the wallet.
+//
+// Public RPCs (Cloudflare, publicnode, LlamaRPC, …) REJECT `getLogs` calls
+// with only a `topics` filter and no `address` — they return codes like
+// -32046 ("Cannot fulfill request") or -32701 ("specify an address or
+// order a full node"). The earlier topic-only implementation therefore
+// produced zero signal for every wallet.
+//
+// This implementation:
+//   1. If the URL hints at Alchemy / Infura, call `alchemy_getAssetTransfers`
+//      via `provider.send` for comprehensive native + ERC20 history in one
+//      round-trip. This is the canonical way to enumerate a wallet's
+//      transfers on those providers.
+//   2. Otherwise, iterate the curated `KNOWN_TOKENS[chain]` list and run
+//      address-filtered `getLogs` against each token. The address filter
+//      is mandatory — topic-only queries are rejected universally.
 // ---------------------------------------------------------------------------
+
+function looksLikeAlchemy(provider) {
+  if (!provider) return false;
+  // ethers v6 stores the configured URL on the provider. Best-effort probe.
+  const probe = provider._getConnection ? provider._getConnection() : null;
+  const url =
+    (probe && (probe.url || (probe.provider && probe.provider.connection && probe.provider.connection.url))) ||
+    (typeof provider.connection === 'object' && provider.connection && provider.connection.url) ||
+    (typeof provider.provider === 'object' && provider.provider && provider.provider.connection && provider.provider.connection.url) ||
+    '';
+  if (typeof url !== 'string') return false;
+  return /alchemy\.com|alchemy\.io|infura\.io/i.test(url);
+}
+
+async function alchemyAssetTransfers(ctx, chain, wallet, win) {
+  const provider = ctx.getProvider(chain);
+  const fromHex = '0x' + win.fromBlock.toString(16);
+  const toHex = '0x' + win.toBlock.toString(16);
+  const walletLc = lower(wallet);
+  const out = {
+    txHashes: new Set(),
+    counterparties: new Map(),
+    fundingEdges: [],
+    contractCounts: new Map(),
+    lastBlock: 0,
+  };
+  for (const direction of ['from', 'to']) {
+    const params = {
+      fromBlock: fromHex,
+      toBlock: toHex,
+      [direction === 'from' ? 'fromAddress' : 'toAddress']: walletLc,
+      category: ['external', 'erc20', 'erc721', 'erc1155'],
+      withMetadata: false,
+      excludeZeroValue: false,
+      maxCount: '0x' + DEFAULT_OPTS.maxLogsPerChain.toString(16),
+    };
+    let resp;
+    try {
+      resp = await rateLimitCall(ctx, () => provider.send('alchemy_getAssetTransfers', [params]), chain);
+    } catch (_) {
+      resp = null;
+    }
+    const list = resp && resp.transfers ? resp.transfers : [];
+    for (const t of list) {
+      const from = lower(t.from || '0x' + '0'.repeat(40));
+      const to = lower(t.to || '0x' + '0'.repeat(40));
+      if (from !== walletLc && to !== walletLc) continue;
+      const hash = t.hash;
+      const blockNumber = typeof t.blockNum === 'string' ? parseInt(t.blockNum, 16) : t.blockNum;
+      out.txHashes.add(hash);
+      const tokenContract = lower(t.rawContract && t.rawContract.address ? t.rawContract.address : '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee');
+      out.fundingEdges.push({
+        from,
+        to,
+        chain,
+        hash,
+        blockNumber,
+        logIndex: 0,
+        tokenContract,
+        value: t.value ? Number(t.value) : 0,
+      });
+      if (blockNumber > out.lastBlock) out.lastBlock = blockNumber;
+      const counter = from === walletLc ? to : from;
+      out.counterparties.set(counter, (out.counterparties.get(counter) || 0) + 1);
+      out.contractCounts.set(tokenContract, (out.contractCounts.get(tokenContract) || 0) + 1);
+      if (out.fundingEdges.length >= DEFAULT_OPTS.maxEdges) break;
+    }
+    if (out.fundingEdges.length >= DEFAULT_OPTS.maxEdges) break;
+  }
+  return out;
+}
+
+async function perTokenTransfers(ctx, chain, wallet, win) {
+  const tokens = KNOWN_TOKENS[chain] || [];
+  if (tokens.length === 0) {
+    return {
+      txHashes: new Set(),
+      counterparties: new Map(),
+      fundingEdges: [],
+      contractCounts: new Map(),
+      lastBlock: 0,
+    };
+  }
+  const provider = ctx.getProvider(chain);
+  const padded = padAddr(wallet);
+  const walletLc = lower(wallet);
+  const out = {
+    txHashes: new Set(),
+    counterparties: new Map(),
+    fundingEdges: [],
+    contractCounts: new Map(),
+    lastBlock: 0,
+  };
+
+  for (const tok of tokens) {
+    if (out.fundingEdges.length >= DEFAULT_OPTS.maxEdges) break;
+    const tokenAddr = lower(tok.address);
+    for (const slotIdx of [1, 2]) {
+      // slot 1 = sender, slot 2 = receiver
+      const topics = slotIdx === 1
+        ? topicSlots([TOPICS.TRANSFER, padded, null, null])
+        : topicSlots([TOPICS.TRANSFER, null, padded, null]);
+      // paginatedLogs handles head-room + chunking.
+      const chunk = await paginatedLogs(
+        ctx,
+        provider,
+        { address: tokenAddr, topics, fromBlock: win.fromBlock, toBlock: win.toBlock },
+        chain,
+      );
+        for (const log of chunk) {
+          if (!log || !log.topics || log.topics.length < 3) continue;
+          const from = '0x' + String(log.topics[1]).slice(-40);
+          const to = '0x' + String(log.topics[2]).slice(-40);
+          if (lower(from) !== walletLc && lower(to) !== walletLc) continue;
+          out.txHashes.add(log.transactionHash);
+          const logIndex =
+            typeof log.index === 'string' ? parseInt(log.index, 16) : log.index || 0;
+          out.fundingEdges.push({
+            from: lower(from),
+            to: lower(to),
+            chain,
+            hash: log.transactionHash,
+            blockNumber: log.blockNumber,
+            logIndex,
+            tokenContract: tokenAddr,
+            value: 0,
+          });
+          if (log.blockNumber > out.lastBlock) out.lastBlock = log.blockNumber;
+          const counter = lower(to) === walletLc ? lower(from) : lower(to);
+          out.counterparties.set(counter, (out.counterparties.get(counter) || 0) + 1);
+          out.contractCounts.set(tokenAddr, (out.contractCounts.get(tokenAddr) || 0) + 1);
+          if (out.fundingEdges.length >= DEFAULT_OPTS.maxEdges) break;
+        }
+    }
+  }
+  return out;
+}
 
 async function fetchEOAActivity(ctx, chain, wallet) {
   if (!wallet || !isAddress(wallet)) {
@@ -363,72 +486,7 @@ async function fetchEOAActivity(ctx, chain, wallet) {
   if (cached) return cached;
 
   const win = await blockWindow(ctx, chain);
-  const padded = padAddr(wallet);
-  const txHashes = new Set();
-  const fundingEdges = [];
-  const counterpartyCounts = new Map();
-  const contractCounts = new Map();
-  let lastBlock = 0;
-  let lastLogIndex = -1;
-
-  try {
-    const sent = await paginatedLogs(
-      ctx,
-      provider,
-      {
-        topics: topicSlots([TOPICS.TRANSFER, padded, null, null]),
-        fromBlock: win.fromBlock,
-        toBlock: win.toBlock,
-      },
-      chain,
-    );
-    const recv = await paginatedLogs(
-      ctx,
-      provider,
-      {
-        topics: topicSlots([TOPICS.TRANSFER, null, padded, null]),
-        fromBlock: win.fromBlock,
-        toBlock: win.toBlock,
-      },
-      chain,
-    );
-
-    const all = sent.concat(recv);
-    for (const log of all) {
-      if (!log || !log.topics || log.topics.length < 3) continue;
-      const from = '0x' + String(log.topics[1]).slice(-40);
-      const to = '0x' + String(log.topics[2]).slice(-40);
-      if (lower(from) !== lower(wallet) && lower(to) !== lower(wallet)) continue;
-      txHashes.add(log.transactionHash);
-      const tokenContract = lower(log.address || '');
-      const logIndex =
-        typeof log.index === 'string' ? parseInt(log.index, 16) : log.index || 0;
-      fundingEdges.push({
-        from: lower(from),
-        to: lower(to),
-        chain,
-        hash: log.transactionHash,
-        blockNumber: log.blockNumber,
-        logIndex,
-        tokenContract,
-        value: 0,
-      });
-      if (
-        log.blockNumber > lastBlock ||
-        (log.blockNumber === lastBlock && logIndex > lastLogIndex)
-      ) {
-        lastBlock = log.blockNumber;
-        lastLogIndex = logIndex;
-      }
-      counterpartyCounts.set(
-        lower(to) === lower(wallet) ? lower(from) : lower(to),
-        (counterpartyCounts.get(
-          lower(to) === lower(wallet) ? lower(from) : lower(to),
-        ) || 0) + 1,
-      );
-      contractCounts.set(tokenContract, (contractCounts.get(tokenContract) || 0) + 1);
-    }
-  } catch (err) {
+  if (!win || !win.fromBlock || win.fromBlock >= win.toBlock) {
     return {
       chain,
       wallet: lower(wallet),
@@ -437,18 +495,42 @@ async function fetchEOAActivity(ctx, chain, wallet) {
       fundingEdges: [],
       contractCounts: new Map(),
       lastBlock: 0,
-      error: err && err.message ? err.message : 'rpc_error',
+      error: 'no_block_window',
     };
+  }
+
+  // Fast path: Alchemy / Infura.
+  let bag;
+  if (looksLikeAlchemy(provider)) {
+    try {
+      bag = await alchemyAssetTransfers(ctx, chain, wallet, win);
+    } catch (_) {
+      bag = null;
+    }
+  }
+  // Universal path: per-token getLogs.
+  if (!bag || bag.fundingEdges.length === 0) {
+    try {
+      bag = await perTokenTransfers(ctx, chain, wallet, win);
+    } catch (_) {
+      bag = {
+        txHashes: new Set(),
+        counterparties: new Map(),
+        fundingEdges: [],
+        contractCounts: new Map(),
+        lastBlock: 0,
+      };
+    }
   }
 
   const out = {
     chain,
     wallet: lower(wallet),
-    txHashes,
-    counterparties: counterpartyCounts,
-    fundingEdges: fundingEdges.slice(0, DEFAULT_OPTS.maxEdges),
-    contractCounts,
-    lastBlock,
+    txHashes: bag.txHashes,
+    counterparties: bag.counterparties,
+    fundingEdges: bag.fundingEdges.slice(0, DEFAULT_OPTS.maxEdges),
+    contractCounts: bag.contractCounts,
+    lastBlock: bag.lastBlock,
     error: null,
   };
   cacheSet(ctx, cacheKey, out);
